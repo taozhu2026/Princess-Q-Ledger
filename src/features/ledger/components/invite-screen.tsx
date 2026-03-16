@@ -31,7 +31,7 @@ export function InviteScreen({ token }: { token: string }) {
     return (
       <div className="flex min-h-[70vh] items-center">
         <AuthCard
-          description="这是一个共享账本邀请。先登录，再回到这个链接完成加入。"
+          description="这是一个共享账本邀请。先登录或注册，再回到这个链接完成加入。登录页里仍然保留备用的邮箱链接方式。"
           nextPath={`/invite/${token}`}
           title="登录后加入账本"
         />

@@ -44,6 +44,18 @@ export const ledgerRepository: LedgerRepository = {
   confirmSettlement(monthKey, amount) {
     return resolveLedgerRepository().confirmSettlement(monthKey, amount);
   },
+  signInWithPassword(input) {
+    return resolveLedgerRepository().signInWithPassword(input);
+  },
+  signUpWithPassword(input) {
+    return resolveLedgerRepository().signUpWithPassword(input);
+  },
+  sendPasswordResetEmail(input) {
+    return resolveLedgerRepository().sendPasswordResetEmail(input);
+  },
+  updatePassword(input) {
+    return resolveLedgerRepository().updatePassword(input);
+  },
   sendMagicLink(email, nextPath) {
     return resolveLedgerRepository().sendMagicLink(email, nextPath);
   },

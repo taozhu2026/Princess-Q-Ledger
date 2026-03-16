@@ -18,7 +18,10 @@ import { useTransactionComposerStore } from "@/features/transactions/store/trans
 
 export function AppShell({ children }: PropsWithChildren) {
   const pathname = usePathname();
-  const { data, error, isPending } = useLedgerSnapshot();
+  const isAuthRoute = pathname.startsWith("/auth");
+  const { data, error, isPending } = useLedgerSnapshot({
+    enabled: !isAuthRoute,
+  });
   const { setTheme } = useTheme();
   const openCreate = useTransactionComposerStore((state) => state.openCreate);
   const pendingDrafts = useTransactionComposerStore((state) => state.pendingDrafts);
@@ -33,7 +36,7 @@ export function AppShell({ children }: PropsWithChildren) {
     setTheme(data.preferences.themePreference);
   }, [data, setTheme]);
 
-  const showChrome = !pathname.startsWith("/invite");
+  const showChrome = !pathname.startsWith("/invite") && !isAuthRoute;
   const shouldGate =
     showChrome &&
     !!data &&
@@ -119,14 +122,17 @@ export function AppShell({ children }: PropsWithChildren) {
         ) : null}
 
         <main>
-          {isPending ? <LedgerLoadingCard /> : null}
-          {!isPending && error ? (
+          {!isAuthRoute && isPending ? <LedgerLoadingCard /> : null}
+          {!isAuthRoute && !isPending && error ? (
             <LedgerErrorCard
               message={error instanceof Error ? error.message : "未知错误"}
             />
           ) : null}
-          {!isPending && !error && isInitializingLedger ? <LedgerLoadingCard /> : null}
-          {!isPending && !error
+          {!isAuthRoute && !isPending && !error && isInitializingLedger ? (
+            <LedgerLoadingCard />
+          ) : null}
+          {isAuthRoute ? children : null}
+          {!isAuthRoute && !isPending && !error
             ? shouldGate && data
               ? <AccessGate snapshot={data} />
               : !isInitializingLedger
@@ -143,7 +149,7 @@ export function AppShell({ children }: PropsWithChildren) {
         </>
       ) : null}
 
-      <TransactionComposer />
+      {!isAuthRoute ? <TransactionComposer /> : null}
     </>
   );
 }

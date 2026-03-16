@@ -348,10 +348,43 @@ export const localLedgerRepository: LedgerRepository = {
     });
   },
 
+  async signInWithPassword() {
+    return {
+      ok: true,
+      message: "当前是本地演示模式，不需要登录。",
+      nextStep: "signed_in" as const,
+    };
+  },
+
+  async signUpWithPassword() {
+    return {
+      ok: true,
+      message: "当前是本地演示模式，不需要注册。",
+      nextStep: "signed_in" as const,
+    };
+  },
+
+  async sendPasswordResetEmail() {
+    return {
+      ok: true,
+      message: "当前是本地演示模式，不需要重置密码。",
+      nextStep: "check_email" as const,
+    };
+  },
+
+  async updatePassword() {
+    return {
+      ok: true,
+      message: "当前是本地演示模式，密码设置不会生效。",
+      nextStep: "password_updated" as const,
+    };
+  },
+
   async sendMagicLink() {
     return {
       ok: true,
       message: "当前是本地演示模式，不需要登录。",
+      nextStep: "signed_in" as const,
     };
   },
 

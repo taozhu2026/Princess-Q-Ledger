@@ -33,7 +33,7 @@ export function AccessGate({ snapshot }: { snapshot: LedgerSnapshot }) {
           </CardDescription>
         </div>
         <p className="mt-5 text-sm text-[var(--muted)]">
-          如果这里长时间不跳转，通常说明数据库 migration 还没有执行完全。
+          如果这里长时间不跳转，通常说明数据库 migration 还没有执行完全，或者当前账号还没有拿到可用 session。
         </p>
       </Card>
     </div>

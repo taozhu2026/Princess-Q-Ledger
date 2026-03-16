@@ -7,13 +7,22 @@ import type {
   LedgerBootstrapInput,
   LedgerSnapshot,
   LedgerViewer,
+  PasswordResetRequestInput,
+  PasswordSignInInput,
+  PasswordSignUpInput,
+  PasswordUpdateInput,
   ProfileUpdateInput,
   ThemePreference,
   Transaction,
   TransactionInput,
   TransactionShare,
 } from "@/entities/ledger/types";
+import { toAuthMessage } from "@/shared/lib/supabase/auth-message";
 import { createSupabaseBrowserClient } from "@/shared/lib/supabase/browser";
+import {
+  buildAuthCallbackUrl,
+  buildPasswordRecoveryUrl,
+} from "@/shared/lib/supabase/paths";
 
 function requireClient() {
   const client = createSupabaseBrowserClient();
@@ -31,16 +40,6 @@ function roundAmount(value: number) {
 
 function displayNameFromEmail(email: string) {
   return email.split("@")[0] || "成员";
-}
-
-function buildRedirectUrl(nextPath = "/") {
-  if (typeof window === "undefined") {
-    return undefined;
-  }
-
-  const url = new URL("/auth/callback", window.location.origin);
-  url.searchParams.set("next", nextPath);
-  return url.toString();
 }
 
 function mapBookMember(
@@ -745,25 +744,129 @@ export const supabaseLedgerRepository: LedgerRepository = {
     return getAuthenticatedSnapshot();
   },
 
-  async sendMagicLink(email, nextPath = "/") {
+  async signInWithPassword(input: PasswordSignInInput) {
     const supabase = requireClient();
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
+    const { error } = await supabase.auth.signInWithPassword({
+      email: input.email.trim(),
+      password: input.password,
+    });
+
+    if (error) {
+      return {
+        ok: false,
+        message: toAuthMessage(error.message),
+        nextStep: "signed_out",
+      };
+    }
+
+    return {
+      ok: true,
+      message: "登录成功，正在回到账本。",
+      nextStep: "signed_in",
+    };
+  },
+
+  async signUpWithPassword(input: PasswordSignUpInput) {
+    const supabase = requireClient();
+    const { data, error } = await supabase.auth.signUp({
+      email: input.email.trim(),
+      password: input.password,
       options: {
-        emailRedirectTo: buildRedirectUrl(nextPath),
+        data: input.displayName?.trim()
+          ? {
+              display_name: input.displayName.trim(),
+            }
+          : undefined,
+        emailRedirectTo: buildAuthCallbackUrl(input.nextPath ?? "/"),
       },
     });
 
     if (error) {
       return {
         ok: false,
-        message: error.message,
+        message: toAuthMessage(error.message),
+        nextStep: "signed_out",
+      };
+    }
+
+    if (data.session) {
+      return {
+        ok: true,
+        message: "注册完成，正在进入你的账本。",
+        nextStep: "signed_in",
+      };
+    }
+
+    return {
+      ok: true,
+      message: "注册成功，请先去邮箱确认账号，再回来登录。",
+      nextStep: "check_email",
+    };
+  },
+
+  async sendPasswordResetEmail(input: PasswordResetRequestInput) {
+    const supabase = requireClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(input.email.trim(), {
+      redirectTo: buildPasswordRecoveryUrl(),
+    });
+
+    if (error) {
+      return {
+        ok: false,
+        message: toAuthMessage(error.message),
+        nextStep: "signed_out",
+      };
+    }
+
+    return {
+      ok: true,
+      message: "重置密码邮件已经发出，请回邮箱继续完成设置。",
+      nextStep: "check_email",
+    };
+  },
+
+  async updatePassword(input: PasswordUpdateInput) {
+    const supabase = requireClient();
+    const { error } = await supabase.auth.updateUser({
+      password: input.password,
+    });
+
+    if (error) {
+      return {
+        ok: false,
+        message: toAuthMessage(error.message),
+        nextStep: "signed_out",
+      };
+    }
+
+    return {
+      ok: true,
+      message: "密码已经更新，下次可以直接用邮箱和密码登录。",
+      nextStep: "password_updated",
+    };
+  },
+
+  async sendMagicLink(email, nextPath = "/") {
+    const supabase = requireClient();
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: {
+        emailRedirectTo: buildAuthCallbackUrl(nextPath),
+      },
+    });
+
+    if (error) {
+      return {
+        ok: false,
+        message: toAuthMessage(error.message),
+        nextStep: "signed_out",
       };
     }
 
     return {
       ok: true,
       message: "登录链接已经发到邮箱，请在同一台设备上打开。",
+      nextStep: "check_email",
     };
   },
 

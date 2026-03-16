@@ -1,12 +1,14 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { startTransition, useEffect } from "react";
 
 import { createSupabaseBrowserClient } from "@/shared/lib/supabase/browser";
 
 export function SupabaseAuthSync() {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
@@ -21,12 +23,15 @@ export function SupabaseAuthSync() {
       void queryClient.invalidateQueries({
         queryKey: ["ledger"],
       });
+      startTransition(() => {
+        router.refresh();
+      });
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [queryClient]);
+  }, [queryClient, router]);
 
   return null;
 }

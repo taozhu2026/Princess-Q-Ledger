@@ -106,6 +106,16 @@ export interface ActionResult {
   message: string;
 }
 
+export type AuthNextStep =
+  | "signed_in"
+  | "check_email"
+  | "password_updated"
+  | "signed_out";
+
+export interface AuthActionResult extends ActionResult {
+  nextStep: AuthNextStep;
+}
+
 export interface GetLedgerSnapshotOptions {
   autoInitialize?: boolean;
 }
@@ -137,6 +147,26 @@ export interface LedgerBootstrapInput {
 
 export interface ProfileUpdateInput {
   displayName: string;
+}
+
+export interface PasswordSignInInput {
+  email: string;
+  password: string;
+}
+
+export interface PasswordSignUpInput {
+  email: string;
+  password: string;
+  displayName?: string;
+  nextPath?: string;
+}
+
+export interface PasswordResetRequestInput {
+  email: string;
+}
+
+export interface PasswordUpdateInput {
+  password: string;
 }
 
 export interface BalanceRow {

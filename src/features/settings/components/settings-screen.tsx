@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
+import { AccountSecurityCard } from "@/features/settings/components/account-security-card";
 import type { CategoryType } from "@/entities/ledger";
 import {
   useCreateCategoryMutation,
@@ -25,6 +26,7 @@ import {
   useUpdateProfileMutation,
 } from "@/features/transactions/api/use-ledger-data";
 import { useTransactionComposerStore } from "@/features/transactions/store/transaction-composer-store";
+import { Input } from "@/shared/ui/input";
 import { InstallPromptCard } from "@/shared/pwa/install-prompt-card";
 import { copyText } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
@@ -57,8 +59,8 @@ function ProfileEditor({
         </div>
       </div>
       <label className="block text-sm font-medium">显示名称</label>
-      <input
-        className="mt-2 w-full rounded-[18px] border bg-[var(--card)] px-4 py-3 outline-none"
+      <Input
+        className="mt-2 bg-[var(--card)] shadow-none"
         onChange={(event) => setDisplayName(event.target.value)}
         placeholder="输入你想显示的昵称"
         value={displayName}
@@ -137,34 +139,43 @@ export function SettingsScreen() {
           </div>
 
           <div>
-            <p className="mb-2 text-sm font-medium">主题</p>
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { value: "light", label: "浅色", icon: SunMedium },
-                { value: "dark", label: "深色", icon: MoonStar },
-                { value: "system", label: "跟随系统", icon: RefreshCw },
-              ].map((item) => {
-                const Icon = item.icon;
+            <div>
+              <p className="mb-2 text-sm font-medium">账号安全</p>
+              <AccountSecurityCard
+                email={data.auth.viewer?.email ?? "未获取邮箱"}
+                supabaseReady={supabaseReady}
+              />
+            </div>
+            <div className="mt-4">
+              <p className="mb-2 text-sm font-medium">主题</p>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { value: "light", label: "浅色", icon: SunMedium },
+                  { value: "dark", label: "深色", icon: MoonStar },
+                  { value: "system", label: "跟随系统", icon: RefreshCw },
+                ].map((item) => {
+                  const Icon = item.icon;
 
-                return (
-                  <button
-                    key={item.value}
-                    className={`rounded-[22px] border border-white/70 px-3 py-3 text-sm font-medium shadow-[var(--shadow-soft)] ${
-                      data.preferences.themePreference === item.value
-                        ? "border-transparent bg-[linear-gradient(180deg,var(--accent-soft),rgba(255,255,255,0.82))] text-[var(--accent-strong)]"
-                        : "bg-[var(--surface)] text-[var(--muted)]"
-                    }`}
-                    onClick={() => {
-                      setTheme(item.value);
-                      setThemePreference.mutate(item.value as "light" | "dark" | "system");
-                    }}
-                    type="button"
-                  >
-                    <Icon className="mx-auto mb-2 h-4 w-4" />
-                    {item.label}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={item.value}
+                      className={`rounded-[22px] border border-white/70 px-3 py-3 text-sm font-medium shadow-[var(--shadow-soft)] ${
+                        data.preferences.themePreference === item.value
+                          ? "border-transparent bg-[linear-gradient(180deg,var(--accent-soft),rgba(255,255,255,0.82))] text-[var(--accent-strong)]"
+                          : "bg-[var(--surface)] text-[var(--muted)]"
+                      }`}
+                      onClick={() => {
+                        setTheme(item.value);
+                        setThemePreference.mutate(item.value as "light" | "dark" | "system");
+                      }}
+                      type="button"
+                    >
+                      <Icon className="mx-auto mb-2 h-4 w-4" />
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -216,8 +227,8 @@ export function SettingsScreen() {
         </CardDescription>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-[1.3fr_0.9fr_auto]">
-          <input
-            className="rounded-[18px] border bg-[var(--surface)] px-4 py-3 outline-none"
+          <Input
+            className="shadow-none"
             onChange={(event) => setNewCategoryName(event.target.value)}
             placeholder="新增分类名称，例如：旅行"
             value={newCategoryName}

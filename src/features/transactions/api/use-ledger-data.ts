@@ -11,6 +11,10 @@ import type {
   LedgerBootstrapInput,
   CategoryType,
   GetLedgerSnapshotOptions,
+  PasswordResetRequestInput,
+  PasswordSignInInput,
+  PasswordSignUpInput,
+  PasswordUpdateInput,
   ProfileUpdateInput,
   ThemePreference,
   TransactionInput,
@@ -18,10 +22,14 @@ import type {
 
 const ledgerQueryKey = ["ledger"];
 
-export function useLedgerSnapshot(options?: GetLedgerSnapshotOptions) {
+export function useLedgerSnapshot(
+  options?: GetLedgerSnapshotOptions & { enabled?: boolean },
+) {
   const autoInitialize = options?.autoInitialize ?? true;
+  const enabled = options?.enabled ?? true;
 
   return useQuery({
+    enabled,
     queryKey: [...ledgerQueryKey, autoInitialize ? "auto-init" : "read-only"],
     queryFn: () => ledgerRepository.getSnapshot({ autoInitialize }),
   });
@@ -134,6 +142,49 @@ export function useConfirmSettlementMutation() {
     mutationFn: ({ monthKey, amount }: { monthKey: string; amount: number }) =>
       ledgerRepository.confirmSettlement(monthKey, amount),
     onSuccess: invalidate,
+  });
+}
+
+export function useSignInWithPasswordMutation() {
+  const invalidate = useInvalidateLedger();
+
+  return useMutation({
+    mutationFn: (input: PasswordSignInInput) =>
+      ledgerRepository.signInWithPassword(input),
+    onSuccess: async () => {
+      await invalidate();
+    },
+  });
+}
+
+export function useSignUpWithPasswordMutation() {
+  const invalidate = useInvalidateLedger();
+
+  return useMutation({
+    mutationFn: (input: PasswordSignUpInput) =>
+      ledgerRepository.signUpWithPassword(input),
+    onSuccess: async () => {
+      await invalidate();
+    },
+  });
+}
+
+export function useSendPasswordResetEmailMutation() {
+  return useMutation({
+    mutationFn: (input: PasswordResetRequestInput) =>
+      ledgerRepository.sendPasswordResetEmail(input),
+  });
+}
+
+export function useUpdatePasswordMutation() {
+  const invalidate = useInvalidateLedger();
+
+  return useMutation({
+    mutationFn: (input: PasswordUpdateInput) =>
+      ledgerRepository.updatePassword(input),
+    onSuccess: async () => {
+      await invalidate();
+    },
   });
 }
 
