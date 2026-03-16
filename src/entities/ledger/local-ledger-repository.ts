@@ -9,6 +9,7 @@ import type {
   CategoryType,
   Invitation,
   LedgerSnapshot,
+  ProfileUpdateInput,
   ThemePreference,
   TransactionInput,
 } from "@/entities/ledger/types";
@@ -49,9 +50,30 @@ export const localLedgerRepository: LedgerRepository = {
     return cloneSnapshot(snapshot);
   },
 
-  async setActiveMember(memberId: string) {
+  async updateProfile(input: ProfileUpdateInput) {
     return withSnapshot((snapshot) => {
-      snapshot.preferences.activeMemberId = memberId;
+      const displayName = input.displayName.trim();
+      const viewerUserId = snapshot.auth.viewer?.userId;
+
+      if (!viewerUserId || !displayName) {
+        return cloneSnapshot(snapshot);
+      }
+
+      if (snapshot.auth.viewer) {
+        snapshot.auth.viewer.displayName = displayName;
+      }
+
+      snapshot.members = snapshot.members.map((member) =>
+        member.userId === viewerUserId
+          ? {
+              ...member,
+              displayName,
+            }
+          : member,
+      );
+      snapshot.viewerMembership =
+        snapshot.members.find((member) => member.userId === viewerUserId) ?? null;
+
       return cloneSnapshot(snapshot);
     });
   },
@@ -116,7 +138,7 @@ export const localLedgerRepository: LedgerRepository = {
         note: input.note.trim(),
         isShared: input.isShared,
         splitMethod: input.splitMethod,
-        createdByMemberId: input.createdByMemberId,
+        createdByUserId: input.createdByUserId,
         createdAt: now,
         updatedAt: now,
         deletedAt: null,
@@ -197,7 +219,7 @@ export const localLedgerRepository: LedgerRepository = {
         id: makeId("invite"),
         bookId: snapshot.book?.id ?? "book-princess-q",
         token: Math.random().toString(36).slice(2, 10),
-        inviterMemberId: snapshot.preferences.activeMemberId,
+        inviterMemberId: snapshot.viewerMembership?.id ?? null,
         createdAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(),
         acceptedAt: null,
@@ -237,13 +259,6 @@ export const localLedgerRepository: LedgerRepository = {
       }
 
       invitation.acceptedAt = new Date().toISOString();
-
-      const otherMember =
-        snapshot.members.find(
-          (member) => member.id !== snapshot.preferences.activeMemberId,
-        ) ?? snapshot.members[0];
-
-      snapshot.preferences.activeMemberId = otherMember?.id ?? null;
 
       return {
         ok: true,
@@ -311,7 +326,10 @@ export const localLedgerRepository: LedgerRepository = {
         note: `结算 ${amount.toFixed(2)} 元`,
         isShared: false,
         splitMethod: "custom_amount",
-        createdByMemberId: snapshot.preferences.activeMemberId ?? payer.memberId,
+        createdByUserId:
+          snapshot.auth.viewer?.userId ??
+          snapshot.members.find((member) => member.id === payer.memberId)?.userId ??
+          "",
         createdAt: now,
         updatedAt: now,
         deletedAt: null,

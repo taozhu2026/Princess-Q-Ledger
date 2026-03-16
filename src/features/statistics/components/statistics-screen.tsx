@@ -21,6 +21,7 @@ export function StatisticsScreen() {
   const months = getAvailableMonths(data);
   const monthKey = selectedMonth ?? months[0];
   const statistics = computeMonthlyStatistics(data, monthKey);
+  const isSharedLedger = data.members.length > 1;
   const maxCategoryAmount = Math.max(
     ...statistics.categoryBreakdown.map((item) => item.amount),
     1,
@@ -86,9 +87,11 @@ export function StatisticsScreen() {
       </Card>
 
       <Card>
-        <CardTitle>双方对比</CardTitle>
+        <CardTitle>{isSharedLedger ? "成员对比" : "我的支出拆分"}</CardTitle>
         <CardDescription className="mt-2">
-          同时看实际付款、共同承担和个人支出，方便判断谁最近垫付更多。
+          {isSharedLedger
+            ? "同时看实际付款、共同承担和个人支出，方便判断谁最近垫付更多。"
+            : "当前是个人账本，这里把你的实付、共同承担和个人支出拆开看。"}
         </CardDescription>
         <div className="mt-5 space-y-4">
           {statistics.memberComparison.map((member) => (

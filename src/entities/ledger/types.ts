@@ -4,11 +4,14 @@ export type ThemePreference = "system" | "light" | "dark";
 export type CategoryType = "expense" | "income" | "settlement";
 export type LedgerMode = "local" | "supabase";
 export type LedgerAuthStatus = "ready" | "signed_out";
+export type BookKind = "personal" | "shared";
 
 export interface LedgerBook {
   id: string;
   name: string;
   currency: string;
+  kind: BookKind;
+  ownerUserId: string;
   createdAt: string;
 }
 
@@ -44,7 +47,7 @@ export interface Transaction {
   note: string;
   isShared: boolean;
   splitMethod: SplitMethod;
-  createdByMemberId: string;
+  createdByUserId: string;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
@@ -73,6 +76,7 @@ export interface LedgerViewer {
   userId: string;
   email: string;
   displayName: string;
+  avatarUrl?: string | null;
 }
 
 export interface LedgerAuth {
@@ -82,13 +86,13 @@ export interface LedgerAuth {
 }
 
 export interface LedgerPreferences {
-  activeMemberId: string | null;
   themePreference: ThemePreference;
 }
 
 export interface LedgerSnapshot {
   auth: LedgerAuth;
   book: LedgerBook | null;
+  viewerMembership: BookMember | null;
   members: BookMember[];
   categories: Category[];
   transactions: Transaction[];
@@ -100,6 +104,10 @@ export interface LedgerSnapshot {
 export interface ActionResult {
   ok: boolean;
   message: string;
+}
+
+export interface GetLedgerSnapshotOptions {
+  autoInitialize?: boolean;
 }
 
 export interface ShareInput {
@@ -119,11 +127,15 @@ export interface TransactionInput {
   isShared: boolean;
   splitMethod: SplitMethod;
   shareInputs: ShareInput[];
-  createdByMemberId: string;
+  createdByUserId: string;
 }
 
 export interface LedgerBootstrapInput {
   bookName: string;
+  displayName: string;
+}
+
+export interface ProfileUpdateInput {
   displayName: string;
 }
 

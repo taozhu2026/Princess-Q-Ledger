@@ -21,10 +21,8 @@ export function AppShell({ children }: PropsWithChildren) {
   const { setTheme } = useTheme();
   const openCreate = useTransactionComposerStore((state) => state.openCreate);
   const pendingDrafts = useTransactionComposerStore((state) => state.pendingDrafts);
-
-  const activeMember = data?.members.find(
-    (member) => member.id === data.preferences.activeMemberId,
-  );
+  const viewerDisplayName =
+    data?.viewerMembership?.displayName ?? data?.auth.viewer?.displayName ?? null;
 
   useEffect(() => {
     if (!data) {
@@ -39,7 +37,13 @@ export function AppShell({ children }: PropsWithChildren) {
     showChrome &&
     !!data &&
     data.auth.mode === "supabase" &&
-    (data.auth.status === "signed_out" || !data.book);
+    data.auth.status === "signed_out";
+  const isInitializingLedger =
+    showChrome &&
+    !!data &&
+    data.auth.mode === "supabase" &&
+    data.auth.status === "ready" &&
+    !data.book;
   const showAppChrome = showChrome && !!data?.book;
 
   return (
@@ -51,11 +55,11 @@ export function AppShell({ children }: PropsWithChildren) {
               <p className="text-xs uppercase tracking-[0.28em] text-[var(--muted)]">
                 Princess Q Ledger
               </p>
-              <h1 className="mt-1 text-xl font-semibold">公主Q的账本</h1>
+              <h1 className="mt-1 text-xl font-semibold">{data.book?.name}</h1>
             </div>
-            {activeMember ? (
+            {viewerDisplayName ? (
               <div className="rounded-full bg-[var(--accent-soft)] px-4 py-2 text-sm font-medium text-[var(--accent)]">
-                当前：{activeMember.displayName}
+                当前：{viewerDisplayName}
               </div>
             ) : null}
           </header>
@@ -84,10 +88,13 @@ export function AppShell({ children }: PropsWithChildren) {
               message={error instanceof Error ? error.message : "未知错误"}
             />
           ) : null}
+          {!isPending && !error && isInitializingLedger ? <LedgerLoadingCard /> : null}
           {!isPending && !error
             ? shouldGate && data
               ? <AccessGate snapshot={data} />
-              : children
+              : !isInitializingLedger
+                ? children
+                : null
             : null}
         </main>
       </div>

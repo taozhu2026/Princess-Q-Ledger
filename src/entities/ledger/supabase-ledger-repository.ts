@@ -7,6 +7,7 @@ import type {
   LedgerBootstrapInput,
   LedgerSnapshot,
   LedgerViewer,
+  ProfileUpdateInput,
   ThemePreference,
   Transaction,
   TransactionInput,
@@ -53,13 +54,24 @@ function mapBookMember(
     id: String(row.id ?? ""),
     userId,
     displayName:
-      String(row.display_name ?? "") ||
       String(profile?.display_name ?? "") ||
+      String(row.display_name ?? "") ||
       displayNameFromEmail(String(profile?.email ?? "")),
     email: String(profile?.email ?? ""),
     accentColor: String(profile?.accent_color ?? "#355f45"),
     role: (row.role as "owner" | "member") ?? "member",
     joinedAt: String(row.joined_at ?? new Date().toISOString()),
+  };
+}
+
+function mapBook(row: Record<string, unknown>) {
+  return {
+    id: String(row.id ?? ""),
+    name: String(row.name ?? ""),
+    currency: String(row.currency ?? "CNY"),
+    kind: (row.kind as "personal" | "shared") ?? "shared",
+    ownerUserId: String(row.created_by ?? ""),
+    createdAt: String(row.created_at ?? new Date().toISOString()),
   };
 }
 
@@ -88,7 +100,7 @@ function mapTransaction(row: Record<string, unknown>): Transaction {
     note: String(row.note ?? ""),
     isShared: Boolean(row.is_shared),
     splitMethod: (row.split_method as Transaction["splitMethod"]) ?? "equal",
-    createdByMemberId: String(row.created_by ?? ""),
+    createdByUserId: String(row.created_by ?? ""),
     createdAt: String(row.created_at ?? new Date().toISOString()),
     updatedAt: String(row.updated_at ?? new Date().toISOString()),
     deletedAt: row.deleted_at ? String(row.deleted_at) : null,
@@ -128,28 +140,65 @@ async function getViewer() {
     return null;
   }
 
-  const { data: profile } = await supabase
+  const { error: ensureProfileError } = await supabase.rpc("ensure_user_profile");
+  if (ensureProfileError) {
+    throw ensureProfileError;
+  }
+
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("display_name, theme_preference")
+    .select("display_name, theme_preference, avatar_url")
     .eq("id", user.id)
     .maybeSingle();
+
+  if (profileError) {
+    throw profileError;
+  }
 
   return {
     userId: user.id,
     email: user.email,
     displayName:
       String(profile?.display_name ?? "") || displayNameFromEmail(user.email),
+    avatarUrl: profile?.avatar_url ? String(profile.avatar_url) : null,
     themePreference: (profile?.theme_preference as ThemePreference | undefined) ?? "system",
   };
 }
 
-async function getCurrentMembership(userId: string) {
+async function ensurePersonalLedger() {
+  const supabase = requireClient();
+  const { data, error } = await supabase.rpc("ensure_personal_ledger");
+
+  if (error) {
+    throw error;
+  }
+
+  return data ? String(data) : null;
+}
+
+async function getExistingBookIdForUser(userId: string) {
+  const supabase = requireClient();
+  const { data, error } = await supabase
+    .from("book_members")
+    .select("book_id")
+    .eq("user_id", userId)
+    .order("joined_at", { ascending: true })
+    .limit(1);
+
+  if (error) {
+    throw error;
+  }
+
+  return data?.[0]?.book_id ? String(data[0].book_id) : null;
+}
+
+async function getCurrentMembership(userId: string, bookId: string) {
   const supabase = requireClient();
   const { data, error } = await supabase
     .from("book_members")
     .select("id, book_id, user_id, role, display_name, joined_at")
     .eq("user_id", userId)
-    .order("joined_at", { ascending: true })
+    .eq("book_id", bookId)
     .limit(1);
 
   if (error) {
@@ -159,9 +208,24 @@ async function getCurrentMembership(userId: string) {
   return ((data ?? [])[0] ?? null) as Record<string, unknown> | null;
 }
 
-async function fetchSnapshotForUser(viewer: LedgerViewer, themePreference: ThemePreference) {
+async function fetchSnapshotForUser(
+  viewer: LedgerViewer,
+  themePreference: ThemePreference,
+  bookId: string | null,
+) {
   const supabase = requireClient();
-  const membership = await getCurrentMembership(viewer.userId);
+  if (!bookId) {
+    return createEmptyLedgerSnapshot({
+      auth: {
+        mode: "supabase",
+        status: "ready",
+        viewer,
+      },
+      themePreference,
+    });
+  }
+
+  const membership = await getCurrentMembership(viewer.userId, bookId);
 
   if (!membership) {
     return createEmptyLedgerSnapshot({
@@ -174,8 +238,6 @@ async function fetchSnapshotForUser(viewer: LedgerViewer, themePreference: Theme
     });
   }
 
-  const bookId = String(membership.book_id ?? "");
-
   const [
     { data: bookRow, error: bookError },
     { data: memberRows, error: membersError },
@@ -186,7 +248,7 @@ async function fetchSnapshotForUser(viewer: LedgerViewer, themePreference: Theme
   ] = await Promise.all([
     supabase
       .from("ledger_books")
-      .select("id, name, currency, created_at")
+      .select("id, name, currency, kind, created_by, created_at")
       .eq("id", bookId)
       .single(),
     supabase
@@ -279,6 +341,11 @@ async function fetchSnapshotForUser(viewer: LedgerViewer, themePreference: Theme
   }
 
   const shareRecords = (shareRows ?? []) as Array<Record<string, unknown>>;
+  const members = memberRecords.map((row) => mapBookMember(row, profileMap));
+  const viewerMembership =
+    members.find((member) => member.userId === viewer.userId) ??
+    members.find((member) => member.id === String(membership.id ?? "")) ??
+    null;
 
   return {
     auth: {
@@ -286,13 +353,9 @@ async function fetchSnapshotForUser(viewer: LedgerViewer, themePreference: Theme
       status: "ready" as const,
       viewer,
     },
-    book: {
-      id: String(bookRow.id),
-      name: String(bookRow.name),
-      currency: String(bookRow.currency),
-      createdAt: String(bookRow.created_at),
-    },
-    members: memberRecords.map((row) => mapBookMember(row, profileMap)),
+    book: mapBook(bookRow as Record<string, unknown>),
+    viewerMembership,
+    members,
     categories: [...systemCategoryRecords, ...customCategoryRecords].map((row) =>
       mapCategory(row),
     ),
@@ -300,13 +363,12 @@ async function fetchSnapshotForUser(viewer: LedgerViewer, themePreference: Theme
     transactionShares: shareRecords.map((row) => mapShare(row)),
     invitations: invitationRecords.map((row) => mapInvitation(row)),
     preferences: {
-      activeMemberId: String(membership.id),
       themePreference,
     },
   } satisfies LedgerSnapshot;
 }
 
-async function getAuthenticatedSnapshot() {
+async function getAuthenticatedSnapshot(autoInitialize = true) {
   const viewer = await getViewer();
 
   if (!viewer) {
@@ -319,20 +381,31 @@ async function getAuthenticatedSnapshot() {
     });
   }
 
+  const bookId = autoInitialize
+    ? await ensurePersonalLedger()
+    : await getExistingBookIdForUser(viewer.userId);
+
   return fetchSnapshotForUser(
     {
       userId: viewer.userId,
       email: viewer.email,
       displayName: viewer.displayName,
+      avatarUrl: viewer.avatarUrl ?? null,
     },
     viewer.themePreference,
+    bookId,
   );
 }
 
 async function getCurrentBookContext() {
   const snapshot = await getAuthenticatedSnapshot();
 
-  if (snapshot.auth.status !== "ready" || !snapshot.auth.viewer || !snapshot.book) {
+  if (
+    snapshot.auth.status !== "ready" ||
+    !snapshot.auth.viewer ||
+    !snapshot.book ||
+    !snapshot.viewerMembership
+  ) {
     throw new Error("No active book");
   }
 
@@ -340,7 +413,7 @@ async function getCurrentBookContext() {
     snapshot,
     viewer: snapshot.auth.viewer,
     bookId: snapshot.book.id,
-    activeMemberId: snapshot.preferences.activeMemberId,
+    viewerMembership: snapshot.viewerMembership,
   };
 }
 
@@ -379,7 +452,7 @@ async function createTransactionInternal(input: TransactionInput) {
       note: input.note.trim(),
       is_shared: input.isShared,
       split_method: input.splitMethod,
-      created_by: input.createdByMemberId,
+      created_by: input.createdByUserId,
     })
     .select("id")
     .single();
@@ -413,20 +486,35 @@ async function createInvitationToken(): Promise<string> {
 }
 
 export const supabaseLedgerRepository: LedgerRepository = {
-  async getSnapshot() {
-    return getAuthenticatedSnapshot();
+  async getSnapshot(options) {
+    return getAuthenticatedSnapshot(options?.autoInitialize ?? true);
   },
 
   async reset() {
     return getAuthenticatedSnapshot();
   },
 
-  async setActiveMember() {
+  async setThemePreference(themePreference) {
+    await upsertThemePreference(themePreference);
     return getAuthenticatedSnapshot();
   },
 
-  async setThemePreference(themePreference) {
-    await upsertThemePreference(themePreference);
+  async updateProfile(input: ProfileUpdateInput) {
+    const supabase = requireClient();
+    const displayName = input.displayName.trim();
+
+    if (!displayName) {
+      return getAuthenticatedSnapshot();
+    }
+
+    const { error } = await supabase.rpc("update_my_profile", {
+      new_display_name: displayName,
+    });
+
+    if (error) {
+      throw error;
+    }
+
     return getAuthenticatedSnapshot();
   },
 
@@ -531,13 +619,13 @@ export const supabaseLedgerRepository: LedgerRepository = {
 
   async createInvitation() {
     const supabase = requireClient();
-    const { bookId, activeMemberId } = await getCurrentBookContext();
+    const { bookId, viewerMembership, viewer } = await getCurrentBookContext();
     const token = await createInvitationToken();
 
     const { error } = await supabase.from("invitations").insert({
       book_id: bookId,
-      inviter_member_id: activeMemberId,
-      inviter_user_id: (await getViewer())?.userId,
+      inviter_member_id: viewerMembership.id,
+      inviter_user_id: viewer.userId,
       token,
       expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(),
     });
@@ -630,7 +718,7 @@ export const supabaseLedgerRepository: LedgerRepository = {
       [...balances].sort((left, right) => left.netBalance - right.netBalance)[0] ??
       null;
 
-    if (!receiver || !payer || !snapshot.book || !snapshot.preferences.activeMemberId) {
+    if (!receiver || !payer || !snapshot.book || !snapshot.auth.viewer) {
       return snapshot;
     }
 
@@ -651,7 +739,7 @@ export const supabaseLedgerRepository: LedgerRepository = {
           isSettlementImpact: true,
         },
       ],
-      createdByMemberId: snapshot.preferences.activeMemberId,
+      createdByUserId: snapshot.auth.viewer.userId,
     });
 
     return getAuthenticatedSnapshot();

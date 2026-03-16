@@ -56,6 +56,7 @@ export function DashboardScreen() {
   const statistics = computeMonthlyStatistics(data, monthKey);
   const settlement = computeSettlementSummary(data, monthKey);
   const recentTransactions = getRecentTransactions(data, 4);
+  const isSharedLedger = data.members.length > 1;
 
   const maxPaidExpense = Math.max(
     ...statistics.memberComparison.map((member) => member.paidExpenseTotal),
@@ -177,9 +178,11 @@ export function DashboardScreen() {
       </Card>
 
       <Card>
-        <CardTitle>双方支出对比</CardTitle>
+        <CardTitle>{isSharedLedger ? "成员支出对比" : "我的支出概览"}</CardTitle>
         <CardDescription className="mt-2">
-          这里比较的是“本月实际付款金额”，不是承担金额。
+          {isSharedLedger
+            ? "这里比较的是“本月实际付款金额”，不是承担金额。"
+            : "当前是个人账本，这里展示你本月实际付款金额。"}
         </CardDescription>
 
         <div className="mt-5 space-y-4">

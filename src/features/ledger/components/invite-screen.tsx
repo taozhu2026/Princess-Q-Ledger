@@ -10,7 +10,7 @@ import { Button } from "@/shared/ui/button";
 import { Card, CardDescription, CardTitle } from "@/shared/ui/card";
 
 export function InviteScreen({ token }: { token: string }) {
-  const { data: snapshot } = useLedgerSnapshot();
+  const { data: snapshot } = useLedgerSnapshot({ autoInitialize: false });
   const { mutate, data } = useAcceptInvitationMutation();
   const attemptedRef = useRef(false);
 

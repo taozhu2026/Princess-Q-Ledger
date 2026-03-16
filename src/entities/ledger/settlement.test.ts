@@ -32,7 +32,7 @@ describe("computeSettlementSummary", () => {
       note: "手动测试结算",
       isShared: false,
       splitMethod: "custom_amount",
-      createdByMemberId: "member-azhe",
+      createdByUserId: "user-azhe",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       deletedAt: null,

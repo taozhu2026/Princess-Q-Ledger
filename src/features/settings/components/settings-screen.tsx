@@ -20,8 +20,8 @@ import {
   useLedgerSnapshot,
   useResetLedgerMutation,
   useSignOutMutation,
-  useSetActiveMemberMutation,
   useSetThemePreferenceMutation,
+  useUpdateProfileMutation,
 } from "@/features/transactions/api/use-ledger-data";
 import { useTransactionComposerStore } from "@/features/transactions/store/transaction-composer-store";
 import { InstallPromptCard } from "@/shared/pwa/install-prompt-card";
@@ -29,11 +29,52 @@ import { copyText } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { Card, CardDescription, CardTitle } from "@/shared/ui/card";
 
+function ProfileEditor({
+  email,
+  initialDisplayName,
+  onSave,
+  onSignOut,
+}: {
+  email: string;
+  initialDisplayName: string;
+  onSave: (displayName: string) => void;
+  onSignOut: () => void;
+}) {
+  const [displayName, setDisplayName] = useState(initialDisplayName);
+
+  return (
+    <div className="rounded-[22px] border bg-[var(--surface)] px-4 py-4">
+      <label className="block text-sm font-medium">显示名称</label>
+      <input
+        className="mt-2 w-full rounded-[18px] border bg-[var(--card)] px-4 py-3 outline-none"
+        onChange={(event) => setDisplayName(event.target.value)}
+        placeholder="输入你想显示的昵称"
+        value={displayName}
+      />
+      <p className="mt-3 text-sm text-[var(--muted)]">
+        这个名字会显示在首页、记录列表、邀请加入后的成员展示里。
+      </p>
+      <div className="mt-4 rounded-[18px] bg-[var(--card)] px-4 py-3">
+        <p className="mt-1 text-sm text-[var(--muted)]">{email}</p>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <Button onClick={() => onSave(displayName)} variant="secondary">
+          保存昵称
+        </Button>
+        <Button onClick={onSignOut} variant="ghost">
+          <LogOut className="mr-2 h-4 w-4" />
+          退出登录
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function SettingsScreen() {
   const { data } = useLedgerSnapshot();
   const { setTheme } = useTheme();
-  const setActiveMember = useSetActiveMemberMutation();
   const setThemePreference = useSetThemePreferenceMutation();
+  const updateProfile = useUpdateProfileMutation();
   const createCategory = useCreateCategoryMutation();
   const deleteCategory = useDeleteCategoryMutation();
   const createInvitation = useCreateInvitationMutation();
@@ -44,70 +85,39 @@ export function SettingsScreen() {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryType, setNewCategoryType] = useState<CategoryType>("expense");
   const [copied, setCopied] = useState(false);
+  const viewerName =
+    data?.viewerMembership?.displayName ?? data?.auth.viewer?.displayName ?? "";
+
+  const inviteLink =
+    data?.invitations[0] && typeof window !== "undefined"
+      ? `${window.location.origin}/invite/${data.invitations[0].token}`
+      : "";
+  const supabaseReady = data?.auth.mode === "supabase";
 
   if (!data) {
     return null;
   }
 
-  const latestInvitation = data.invitations[0] ?? null;
-  const activeMember = data.members.find(
-    (member) => member.id === data.preferences.activeMemberId,
-  );
-
-  const inviteLink =
-    latestInvitation && typeof window !== "undefined"
-      ? `${window.location.origin}/invite/${latestInvitation.token}`
-      : "";
-  const supabaseReady = data.auth.mode === "supabase";
-
   return (
     <div className="space-y-4">
       <Card>
-        <CardTitle>成员与主题</CardTitle>
+        <CardTitle>账号与主题</CardTitle>
         <CardDescription className="mt-2">
           {supabaseReady
-            ? "真实数据模式下，当前成员由登录账号决定；另一位成员会通过邀请链接加入。"
-            : "本地演示模式下，你可以临时切换成员视角。"}
+            ? "昵称和邮箱都绑定到当前登录账号，账本与交易会围绕这个真实身份展开。"
+            : "当前是本地演示模式，昵称修改只会保存在浏览器本地。"}
         </CardDescription>
 
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <div>
-            <p className="mb-2 text-sm font-medium">
-              {supabaseReady ? "当前账号" : "当前成员"}
-            </p>
-            {supabaseReady ? (
-              <div className="rounded-[22px] border bg-[var(--surface)] px-4 py-4">
-                <p className="font-semibold">
-                  {activeMember?.displayName ?? data.auth.viewer?.displayName ?? "未命名成员"}
-                </p>
-                <p className="mt-1 text-sm text-[var(--muted)]">
-                  {data.auth.viewer?.email ?? "未获取邮箱"}
-                </p>
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <Button onClick={() => signOut.mutate()} variant="ghost">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    退出登录
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                {data.members.map((member) => (
-                  <button
-                    key={member.id}
-                    className={`rounded-[20px] border px-4 py-3 text-sm font-medium ${
-                      data.preferences.activeMemberId === member.id
-                        ? "border-transparent bg-[var(--accent-soft)] text-[var(--accent)]"
-                        : "bg-[var(--surface)] text-[var(--muted)]"
-                    }`}
-                    onClick={() => setActiveMember.mutate(member.id)}
-                    type="button"
-                  >
-                    {member.displayName}
-                  </button>
-                ))}
-              </div>
-            )}
+            <p className="mb-2 text-sm font-medium">个人资料</p>
+            <ProfileEditor
+              email={data.auth.viewer?.email ?? "未获取邮箱"}
+              initialDisplayName={viewerName}
+              key={viewerName || "viewer"}
+              onSave={(displayName) => updateProfile.mutate({ displayName })}
+              onSignOut={() => signOut.mutate()}
+            />
           </div>
 
           <div>
@@ -150,7 +160,7 @@ export function SettingsScreen() {
             <CardTitle>邀请另一位成员</CardTitle>
             <CardDescription className="mt-2">
               {supabaseReady
-                ? "生成真实邀请链接。对方登录后打开链接，会被加入同一个账本。"
+                ? "当前账本已经和你的真实账号绑定。后续邀请另一位成员时，对方会以自己的账号加入。"
                 : "当前还是本地演示邀请链接，便于先走通界面流程。"}
             </CardDescription>
           </div>

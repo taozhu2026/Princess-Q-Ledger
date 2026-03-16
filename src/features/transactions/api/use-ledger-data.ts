@@ -10,16 +10,20 @@ import { ledgerRepository } from "@/entities/ledger";
 import type {
   LedgerBootstrapInput,
   CategoryType,
+  GetLedgerSnapshotOptions,
+  ProfileUpdateInput,
   ThemePreference,
   TransactionInput,
 } from "@/entities/ledger";
 
 const ledgerQueryKey = ["ledger"];
 
-export function useLedgerSnapshot() {
+export function useLedgerSnapshot(options?: GetLedgerSnapshotOptions) {
+  const autoInitialize = options?.autoInitialize ?? true;
+
   return useQuery({
-    queryKey: ledgerQueryKey,
-    queryFn: () => ledgerRepository.getSnapshot(),
+    queryKey: [...ledgerQueryKey, autoInitialize ? "auto-init" : "read-only"],
+    queryFn: () => ledgerRepository.getSnapshot({ autoInitialize }),
   });
 }
 
@@ -67,21 +71,21 @@ export function useDeleteTransactionMutation() {
   });
 }
 
-export function useSetActiveMemberMutation() {
-  const invalidate = useInvalidateLedger();
-
-  return useMutation({
-    mutationFn: (memberId: string) => ledgerRepository.setActiveMember(memberId),
-    onSuccess: invalidate,
-  });
-}
-
 export function useSetThemePreferenceMutation() {
   const invalidate = useInvalidateLedger();
 
   return useMutation({
     mutationFn: (themePreference: ThemePreference) =>
       ledgerRepository.setThemePreference(themePreference),
+    onSuccess: invalidate,
+  });
+}
+
+export function useUpdateProfileMutation() {
+  const invalidate = useInvalidateLedger();
+
+  return useMutation({
+    mutationFn: (input: ProfileUpdateInput) => ledgerRepository.updateProfile(input),
     onSuccess: invalidate,
   });
 }

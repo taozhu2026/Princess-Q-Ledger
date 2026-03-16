@@ -14,13 +14,13 @@ export function createEmptyLedgerSnapshot({
   return {
     auth,
     book: null,
+    viewerMembership: null,
     members: [],
     categories: [],
     transactions: [],
     transactionShares: [],
     invitations: [],
     preferences: {
-      activeMemberId: null,
       themePreference,
     },
   };

@@ -1,17 +1,19 @@
 import type {
   ActionResult,
   CategoryType,
+  GetLedgerSnapshotOptions,
   LedgerBootstrapInput,
   LedgerSnapshot,
+  ProfileUpdateInput,
   ThemePreference,
   TransactionInput,
 } from "@/entities/ledger/types";
 
 export interface LedgerRepository {
-  getSnapshot(): Promise<LedgerSnapshot>;
+  getSnapshot(options?: GetLedgerSnapshotOptions): Promise<LedgerSnapshot>;
   reset(): Promise<LedgerSnapshot>;
-  setActiveMember(memberId: string): Promise<LedgerSnapshot>;
   setThemePreference(themePreference: ThemePreference): Promise<LedgerSnapshot>;
+  updateProfile(input: ProfileUpdateInput): Promise<LedgerSnapshot>;
   createCategory(input: { name: string; type: CategoryType }): Promise<LedgerSnapshot>;
   deleteCategory(categoryId: string): Promise<LedgerSnapshot>;
   createTransaction(input: TransactionInput): Promise<LedgerSnapshot>;

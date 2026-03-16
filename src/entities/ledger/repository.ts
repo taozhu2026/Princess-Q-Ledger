@@ -4,27 +4,21 @@ import type { LedgerRepository } from "@/entities/ledger/repository-types";
 import { createSupabaseBrowserClient } from "@/shared/lib/supabase/browser";
 
 function resolveLedgerRepository(): LedgerRepository {
-  if (typeof window === "undefined") {
-    return localLedgerRepository;
-  }
-
-  return createSupabaseBrowserClient()
-    ? supabaseLedgerRepository
-    : localLedgerRepository;
+  return createSupabaseBrowserClient() ? supabaseLedgerRepository : localLedgerRepository;
 }
 
 export const ledgerRepository: LedgerRepository = {
-  getSnapshot() {
-    return resolveLedgerRepository().getSnapshot();
+  getSnapshot(options) {
+    return resolveLedgerRepository().getSnapshot(options);
   },
   reset() {
     return resolveLedgerRepository().reset();
   },
-  setActiveMember(memberId) {
-    return resolveLedgerRepository().setActiveMember(memberId);
-  },
   setThemePreference(themePreference) {
     return resolveLedgerRepository().setThemePreference(themePreference);
+  },
+  updateProfile(input) {
+    return resolveLedgerRepository().updateProfile(input);
   },
   createCategory(input) {
     return resolveLedgerRepository().createCategory(input);

@@ -46,14 +46,14 @@ function splitEvenly(memberIds: string[], amount: number) {
 }
 
 function buildDefaultForm(
-  activeMemberId: string,
+  viewerMemberId: string,
   categoryId: string,
 ): TransactionFormState {
   return {
     type: "expense",
     amount: "",
     categoryId,
-    payerMemberId: activeMemberId,
+    payerMemberId: viewerMemberId,
     occurredAt: toDateTimeInput(new Date().toISOString()),
     note: "",
     splitPreset: "equal",
@@ -83,10 +83,9 @@ export function TransactionComposer() {
   const transaction = editingTransactionId
     ? data.transactions.find((entry) => entry.id === editingTransactionId)
     : null;
-  const activeMemberId =
-    data.preferences.activeMemberId ?? data.members[0]?.id ?? "";
+  const viewerMemberId = data.viewerMembership?.id ?? data.members[0]?.id ?? "";
 
-  let initialForm = buildDefaultForm(activeMemberId, fallbackCategoryId);
+  let initialForm = buildDefaultForm(viewerMemberId, fallbackCategoryId);
 
   if (draft) {
     initialForm = draft.payload;
@@ -114,7 +113,7 @@ export function TransactionComposer() {
       editingTransactionId={editingTransactionId}
       initialForm={initialForm}
       key={`${editingTransactionId ?? "new"}:${restoreDraftId ?? "live"}:${
-        data.preferences.activeMemberId
+        data.viewerMembership?.id ?? "viewer"
       }`}
       restoreDraftId={restoreDraftId}
     />
@@ -212,8 +211,10 @@ function TransactionComposerSheet({
           ? "equal"
           : "custom_amount",
       shareInputs,
-      createdByMemberId:
-        data.preferences.activeMemberId ?? data.members[0]?.id ?? form.payerMemberId,
+      createdByUserId:
+        data.auth.viewer?.userId ??
+        data.members.find((member) => member.id === form.payerMemberId)?.userId ??
+        "",
     };
 
     if (editingTransactionId) {
