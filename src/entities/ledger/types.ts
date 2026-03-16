@@ -2,6 +2,8 @@ export type TransactionType = "expense" | "income" | "settlement";
 export type SplitMethod = "equal" | "custom_amount";
 export type ThemePreference = "system" | "light" | "dark";
 export type CategoryType = "expense" | "income" | "settlement";
+export type LedgerMode = "local" | "supabase";
+export type LedgerAuthStatus = "ready" | "signed_out";
 
 export interface LedgerBook {
   id: string;
@@ -61,25 +63,43 @@ export interface Invitation {
   id: string;
   bookId: string;
   token: string;
-  inviterMemberId: string;
+  inviterMemberId: string | null;
   createdAt: string;
   expiresAt: string;
   acceptedAt: string | null;
 }
 
+export interface LedgerViewer {
+  userId: string;
+  email: string;
+  displayName: string;
+}
+
+export interface LedgerAuth {
+  mode: LedgerMode;
+  status: LedgerAuthStatus;
+  viewer: LedgerViewer | null;
+}
+
 export interface LedgerPreferences {
-  activeMemberId: string;
+  activeMemberId: string | null;
   themePreference: ThemePreference;
 }
 
 export interface LedgerSnapshot {
-  book: LedgerBook;
+  auth: LedgerAuth;
+  book: LedgerBook | null;
   members: BookMember[];
   categories: Category[];
   transactions: Transaction[];
   transactionShares: TransactionShare[];
   invitations: Invitation[];
   preferences: LedgerPreferences;
+}
+
+export interface ActionResult {
+  ok: boolean;
+  message: string;
 }
 
 export interface ShareInput {
@@ -100,6 +120,11 @@ export interface TransactionInput {
   splitMethod: SplitMethod;
   shareInputs: ShareInput[];
   createdByMemberId: string;
+}
+
+export interface LedgerBootstrapInput {
+  bookName: string;
+  displayName: string;
 }
 
 export interface BalanceRow {

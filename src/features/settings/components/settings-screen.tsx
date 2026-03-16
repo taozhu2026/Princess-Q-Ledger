@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, DatabaseBackup, Link2, MoonStar, RefreshCw, SunMedium } from "lucide-react";
+import {
+  Copy,
+  DatabaseBackup,
+  Link2,
+  LogOut,
+  MoonStar,
+  RefreshCw,
+  SunMedium,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 
 import type { CategoryType } from "@/entities/ledger";
@@ -11,6 +19,7 @@ import {
   useDeleteCategoryMutation,
   useLedgerSnapshot,
   useResetLedgerMutation,
+  useSignOutMutation,
   useSetActiveMemberMutation,
   useSetThemePreferenceMutation,
 } from "@/features/transactions/api/use-ledger-data";
@@ -29,6 +38,7 @@ export function SettingsScreen() {
   const deleteCategory = useDeleteCategoryMutation();
   const createInvitation = useCreateInvitationMutation();
   const resetLedger = useResetLedgerMutation();
+  const signOut = useSignOutMutation();
   const openDraft = useTransactionComposerStore((state) => state.openCreate);
   const pendingDrafts = useTransactionComposerStore((state) => state.pendingDrafts);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -40,43 +50,64 @@ export function SettingsScreen() {
   }
 
   const latestInvitation = data.invitations[0] ?? null;
+  const activeMember = data.members.find(
+    (member) => member.id === data.preferences.activeMemberId,
+  );
 
   const inviteLink =
     latestInvitation && typeof window !== "undefined"
       ? `${window.location.origin}/invite/${latestInvitation.token}`
       : "";
-  const supabaseReady = Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  );
+  const supabaseReady = data.auth.mode === "supabase";
 
   return (
     <div className="space-y-4">
       <Card>
         <CardTitle>成员与主题</CardTitle>
         <CardDescription className="mt-2">
-          首版默认是双人共享账本，当前登录后端还未接入时，用这里切换视角最方便。
+          {supabaseReady
+            ? "真实数据模式下，当前成员由登录账号决定；另一位成员会通过邀请链接加入。"
+            : "本地演示模式下，你可以临时切换成员视角。"}
         </CardDescription>
 
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <div>
-            <p className="mb-2 text-sm font-medium">当前成员</p>
-            <div className="grid grid-cols-2 gap-3">
-              {data.members.map((member) => (
-                <button
-                  key={member.id}
-                  className={`rounded-[20px] border px-4 py-3 text-sm font-medium ${
-                    data.preferences.activeMemberId === member.id
-                      ? "border-transparent bg-[var(--accent-soft)] text-[var(--accent)]"
-                      : "bg-[var(--surface)] text-[var(--muted)]"
-                  }`}
-                  onClick={() => setActiveMember.mutate(member.id)}
-                  type="button"
-                >
-                  {member.displayName}
-                </button>
-              ))}
-            </div>
+            <p className="mb-2 text-sm font-medium">
+              {supabaseReady ? "当前账号" : "当前成员"}
+            </p>
+            {supabaseReady ? (
+              <div className="rounded-[22px] border bg-[var(--surface)] px-4 py-4">
+                <p className="font-semibold">
+                  {activeMember?.displayName ?? data.auth.viewer?.displayName ?? "未命名成员"}
+                </p>
+                <p className="mt-1 text-sm text-[var(--muted)]">
+                  {data.auth.viewer?.email ?? "未获取邮箱"}
+                </p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <Button onClick={() => signOut.mutate()} variant="ghost">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    退出登录
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {data.members.map((member) => (
+                  <button
+                    key={member.id}
+                    className={`rounded-[20px] border px-4 py-3 text-sm font-medium ${
+                      data.preferences.activeMemberId === member.id
+                        ? "border-transparent bg-[var(--accent-soft)] text-[var(--accent)]"
+                        : "bg-[var(--surface)] text-[var(--muted)]"
+                    }`}
+                    onClick={() => setActiveMember.mutate(member.id)}
+                    type="button"
+                  >
+                    {member.displayName}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
@@ -118,7 +149,9 @@ export function SettingsScreen() {
           <div>
             <CardTitle>邀请另一位成员</CardTitle>
             <CardDescription className="mt-2">
-              这里生成的是首版演示邀请链接。等 Supabase Auth 接上后，会切到正式登录加入流程。
+              {supabaseReady
+                ? "生成真实邀请链接。对方登录后打开链接，会被加入同一个账本。"
+                : "当前还是本地演示邀请链接，便于先走通界面流程。"}
             </CardDescription>
           </div>
           <div className="rounded-2xl bg-[var(--accent-soft)] p-3 text-[var(--accent)]">
@@ -246,13 +279,15 @@ export function SettingsScreen() {
           >
             打开离线草稿（{pendingDrafts.length}）
           </Button>
-          <Button onClick={() => resetLedger.mutate()} variant="ghost">
-            重置演示数据
-          </Button>
+          {!supabaseReady ? (
+            <Button onClick={() => resetLedger.mutate()} variant="ghost">
+              重置演示数据
+            </Button>
+          ) : null}
         </div>
 
         <div className="mt-4 rounded-[22px] bg-[var(--surface)] px-4 py-4 text-sm text-[var(--muted)]">
-          Supabase 环境状态：{supabaseReady ? "已检测到公开环境变量" : "未配置，当前使用本地演示数据"}
+          数据模式：{supabaseReady ? "Supabase 真实数据" : "本地演示数据"}
         </div>
       </Card>
     </div>

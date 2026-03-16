@@ -83,11 +83,10 @@ export function TransactionComposer() {
   const transaction = editingTransactionId
     ? data.transactions.find((entry) => entry.id === editingTransactionId)
     : null;
+  const activeMemberId =
+    data.preferences.activeMemberId ?? data.members[0]?.id ?? "";
 
-  let initialForm = buildDefaultForm(
-    data.preferences.activeMemberId,
-    fallbackCategoryId,
-  );
+  let initialForm = buildDefaultForm(activeMemberId, fallbackCategoryId);
 
   if (draft) {
     initialForm = draft.payload;
@@ -213,7 +212,8 @@ function TransactionComposerSheet({
           ? "equal"
           : "custom_amount",
       shareInputs,
-      createdByMemberId: data.preferences.activeMemberId,
+      createdByMemberId:
+        data.preferences.activeMemberId ?? data.members[0]?.id ?? form.payerMemberId,
     };
 
     if (editingTransactionId) {

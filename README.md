@@ -18,20 +18,22 @@ npm install
 npm run dev
 ```
 
-默认会使用本地浏览器存储里的演示数据直接运行，不依赖外部后端。
+未配置 Supabase 环境变量时，会退回到本地浏览器存储里的演示数据，方便继续开发 UI。
 
 如果要接入 Supabase：
 
 1. 复制 `.env.example` 为 `.env.local`
 2. 填入 `NEXT_PUBLIC_SUPABASE_URL` 和 `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-3. 在 Supabase 中执行 `supabase/migrations/202603160001_init.sql`
+3. 在 Supabase 中依次执行 `supabase/migrations/202603160001_init.sql` 和 `supabase/migrations/202603160002_real_data_foundation.sql`
+4. 在 Supabase Auth 的邮箱登录里开启 Magic Link
+5. 把站点 URL 和重定向 URL 配到 `/auth/callback`
 
 ## 当前实现
 
 - 首页：月概览、结算建议、最近记录
 - 账单：筛选、编辑、删除
 - 统计：分类占比、双方对比、6 个月趋势
-- 设置：成员切换、主题、分类管理、邀请链接、PWA 安装、离线草稿入口
+- 设置：本地模式下支持成员切换；Supabase 模式下支持真实登录账号、邀请链接、主题和分类管理
 - 记一笔：底部抽屉，3 步主路径
 - PWA：manifest、service worker、安装提示
 - 测试：核心结算与统计逻辑单元测试

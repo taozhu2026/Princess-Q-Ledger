@@ -314,6 +314,15 @@ const transactionShares: TransactionShare[] = [
 
 export function getDefaultLedgerSnapshot(): LedgerSnapshot {
   return {
+    auth: {
+      mode: "local",
+      status: "ready",
+      viewer: {
+        userId: "user-qq",
+        email: "qq@example.com",
+        displayName: "QQ",
+      },
+    },
     book,
     members,
     categories,

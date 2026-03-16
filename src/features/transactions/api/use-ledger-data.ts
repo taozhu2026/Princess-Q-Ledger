@@ -8,6 +8,7 @@ import {
 
 import { ledgerRepository } from "@/entities/ledger";
 import type {
+  LedgerBootstrapInput,
   CategoryType,
   ThemePreference,
   TransactionInput,
@@ -137,6 +138,37 @@ export function useResetLedgerMutation() {
 
   return useMutation({
     mutationFn: () => ledgerRepository.reset(),
+    onSuccess: invalidate,
+  });
+}
+
+export function useSendMagicLinkMutation() {
+  return useMutation({
+    mutationFn: ({
+      email,
+      nextPath,
+    }: {
+      email: string;
+      nextPath?: string;
+    }) => ledgerRepository.sendMagicLink(email, nextPath),
+  });
+}
+
+export function useSignOutMutation() {
+  const invalidate = useInvalidateLedger();
+
+  return useMutation({
+    mutationFn: () => ledgerRepository.signOut(),
+    onSuccess: invalidate,
+  });
+}
+
+export function useBootstrapLedgerMutation() {
+  const invalidate = useInvalidateLedger();
+
+  return useMutation({
+    mutationFn: (input: LedgerBootstrapInput) =>
+      ledgerRepository.bootstrapLedger(input),
     onSuccess: invalidate,
   });
 }

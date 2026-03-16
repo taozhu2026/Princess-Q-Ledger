@@ -23,7 +23,7 @@ describe("computeSettlementSummary", () => {
 
     snapshot.transactions.unshift({
       id: "txn-settlement-test",
-      bookId: snapshot.book.id,
+      bookId: snapshot.book!.id,
       type: "settlement",
       amount: 36,
       categoryId: "cat-settlement",

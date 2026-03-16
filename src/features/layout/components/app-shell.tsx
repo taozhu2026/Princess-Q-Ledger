@@ -4,6 +4,11 @@ import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, type PropsWithChildren } from "react";
 
+import { AccessGate } from "@/features/ledger/components/access-gate";
+import {
+  LedgerErrorCard,
+  LedgerLoadingCard,
+} from "@/features/ledger/components/ledger-status-card";
 import { BottomNav } from "@/features/layout/components/bottom-nav";
 import { FloatingCreateButton } from "@/features/layout/components/floating-create-button";
 import { TransactionComposer } from "@/features/transactions/components/transaction-composer";
@@ -12,7 +17,7 @@ import { useTransactionComposerStore } from "@/features/transactions/store/trans
 
 export function AppShell({ children }: PropsWithChildren) {
   const pathname = usePathname();
-  const { data } = useLedgerSnapshot();
+  const { data, error, isPending } = useLedgerSnapshot();
   const { setTheme } = useTheme();
   const openCreate = useTransactionComposerStore((state) => state.openCreate);
   const pendingDrafts = useTransactionComposerStore((state) => state.pendingDrafts);
@@ -30,11 +35,17 @@ export function AppShell({ children }: PropsWithChildren) {
   }, [data, setTheme]);
 
   const showChrome = !pathname.startsWith("/invite");
+  const shouldGate =
+    showChrome &&
+    !!data &&
+    data.auth.mode === "supabase" &&
+    (data.auth.status === "signed_out" || !data.book);
+  const showAppChrome = showChrome && !!data?.book;
 
   return (
     <>
       <div className="mx-auto min-h-screen max-w-[520px] px-4 pb-28 pt-5">
-        {showChrome ? (
+        {showAppChrome ? (
           <header className="mb-5 flex items-center justify-between rounded-[30px] border border-[var(--border)] bg-[var(--card)]/92 px-5 py-4 shadow-[var(--shadow-soft)] backdrop-blur">
             <div>
               <p className="text-xs uppercase tracking-[0.28em] text-[var(--muted)]">
@@ -50,7 +61,7 @@ export function AppShell({ children }: PropsWithChildren) {
           </header>
         ) : null}
 
-        {pendingDrafts.length > 0 && showChrome ? (
+        {pendingDrafts.length > 0 && showAppChrome ? (
           <button
             className="mb-4 flex w-full items-center justify-between rounded-[24px] border border-dashed border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-left"
             onClick={() => openCreate(pendingDrafts[0]?.id)}
@@ -66,10 +77,22 @@ export function AppShell({ children }: PropsWithChildren) {
           </button>
         ) : null}
 
-        <main>{children}</main>
+        <main>
+          {isPending ? <LedgerLoadingCard /> : null}
+          {!isPending && error ? (
+            <LedgerErrorCard
+              message={error instanceof Error ? error.message : "未知错误"}
+            />
+          ) : null}
+          {!isPending && !error
+            ? shouldGate && data
+              ? <AccessGate snapshot={data} />
+              : children
+            : null}
+        </main>
       </div>
 
-      {showChrome ? (
+      {showAppChrome ? (
         <>
           <FloatingCreateButton />
           <BottomNav />

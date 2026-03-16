@@ -6,16 +6,17 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const origin = requestUrl.origin;
+  const next = requestUrl.searchParams.get("next") || "/";
 
   if (!code) {
-    return NextResponse.redirect(new URL("/settings", origin));
+    return NextResponse.redirect(new URL(next, origin));
   }
 
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
-    return NextResponse.redirect(new URL("/settings", origin));
+    return NextResponse.redirect(new URL(next, origin));
   }
 
   await supabase.auth.exchangeCodeForSession(code);
-  return NextResponse.redirect(new URL("/", origin));
+  return NextResponse.redirect(new URL(next, origin));
 }
