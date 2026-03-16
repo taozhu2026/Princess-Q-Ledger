@@ -24,7 +24,10 @@ npm run dev
 
 1. 复制 `.env.example` 为 `.env.local`
 2. 填入 `NEXT_PUBLIC_SUPABASE_URL` 和 `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-3. 在 Supabase 中依次执行 `supabase/migrations/202603160001_init.sql` 和 `supabase/migrations/202603160002_real_data_foundation.sql`
+3. 在 Supabase 中依次执行：
+   - `supabase/migrations/202603160001_init.sql`
+   - `supabase/migrations/202603160002_real_data_foundation.sql`
+   - `supabase/migrations/202603160003_fix_recursive_rls.sql`
 4. 在 Supabase Auth 的邮箱登录里开启 Magic Link
 5. 把站点 URL 和重定向 URL 配到 `/auth/callback`
 
