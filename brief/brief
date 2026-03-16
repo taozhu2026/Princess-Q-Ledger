@@ -1,0 +1,151 @@
+Codex Plan Mode Prompt (Enhanced Version)
+
+You are a senior full-stack architect and product engineer responsible for designing a production-quality system architecture before writing code.
+
+The project name is “公主Q的账本 (Princess Q Ledger)”.
+
+This is a Chinese-language application.
+All user interface text, navigation labels, and visible product language must be Chinese, because the target users are Chinese speakers.
+Code comments may remain English, but the product UI must be Chinese.
+
+Do not immediately generate code.
+First design the system architecture, product structure, and development plan, then implement the system step by step.
+
+The product concept is simple.
+“公主Q的账本” is a two-person shared expense ledger designed for couples.
+It allows two people to record daily expenses, track shared spending, and automatically calculate balances between them.
+
+The goal is not to create a complicated financial system, but a minimal, stable, calm, practical ledger used daily on a phone.
+
+The design philosophy should prioritize simplicity, clarity, reliability, and mobile-first usability.
+The interface should feel calm and uncluttered, with minimal visual noise and clear hierarchy.
+
+The application is primarily designed for mobile usage, especially iPhone, therefore interaction must support quick thumb input and simple navigation.
+
+Users should be able to record a transaction in only a few steps:
+
+enter amount,
+select category,
+save.
+
+Other fields should be optional or intelligently defaulted.
+
+The initial version must prioritize low-cost architecture.
+
+The system should be implemented as a responsive web application with PWA support, so that it can run on iPhone and be installed to the home screen like an app without App Store distribution.
+
+Recommended technology stack:
+
+Next.js
+TypeScript
+TailwindCSS
+shadcn/ui or similar lightweight UI system
+Supabase (Postgres + Auth)
+React hooks or Zustand for state
+TanStack Query for server data
+
+The architecture must remain modular so that the project can later migrate to Expo or React Native if a native mobile app becomes necessary.
+
+The core logic of the system revolves around shared expenses and payment attribution.
+
+Each transaction must clearly distinguish:
+
+who paid the money,
+who should share the cost.
+
+Example scenario:
+
+QQ pays 100 for dinner,
+split equally,
+each person shares 50.
+
+If one person paid more than their share over a month, the system must calculate a settlement suggestion.
+
+Example:
+
+User A paid 800
+User B paid 400
+Shared total 1200
+Each should pay 600
+Result: User B owes User A 200
+
+This calculation must be automatic.
+
+The application should contain four main sections.
+
+首页 (Dashboard) shows monthly overview, total spending, spending comparison between the two users, shared expense totals, settlement balance, and recent transactions.
+
+账单 (Ledger) shows the chronological list of transactions with filtering by month, category, or payer.
+
+统计 (Statistics) shows spending trends, category distribution, and comparison between users.
+
+设置 (Settings) allows profile configuration, category management, theme preferences, and ledger options.
+
+The system must use a relational data model.
+
+Core entities include:
+
+User
+LedgerBook
+BookMember
+Category
+Transaction
+TransactionShare
+Settlement
+Tag (optional)
+
+TransactionShare must store split results explicitly so that statistics and settlement logic remain reliable.
+
+Split logic must not be stored as opaque JSON structures.
+
+Version one must include only the essential capabilities:
+
+create shared ledger,
+record income and expenses,
+edit and delete transactions,
+custom categories,
+monthly statistics,
+shared expense settlement calculation,
+light and dark theme support.
+
+The first version must not include complex financial automation, such as bank integrations, OCR receipt recognition, AI features, or advanced budgeting.
+
+The codebase should follow a feature-based architecture instead of a page-based architecture.
+
+Suggested modules include:
+
+transactions
+categories
+statistics
+settlements
+settings
+ledger
+
+Business logic must be placed in service or domain modules rather than inside UI components.
+
+The development process should proceed in phases.
+
+First create the project scaffold, database schema, and base layout.
+
+Then implement transaction CRUD and category management.
+
+Then implement statistics aggregation and settlement logic.
+
+Finally refine mobile experience and add PWA capability.
+
+Each stage should produce a working build.
+
+Before writing code, you must output:
+
+system architecture overview
+data model design
+database schema
+information architecture
+directory structure
+development roadmap
+
+After the planning phase is complete, then begin implementing the system.
+
+Design a clean and scalable architecture for the Chinese couple expense tracking app “公主Q的账本”, prioritizing simplicity, stability, and excellent mobile usability.
+
+Begin with architecture and planning, not code.
