@@ -24,14 +24,18 @@ export function appendNextPath(path: string, nextPath?: string) {
   return `${path}${separator}next=${encodeURIComponent(safeNextPath)}`;
 }
 
+export function buildAbsoluteAuthCallbackUrl(origin: string, nextPath = "/") {
+  const url = new URL("/auth/callback", origin);
+  url.searchParams.set("next", resolveSafeNextPath(nextPath, "/"));
+  return url.toString();
+}
+
 export function buildAuthCallbackUrl(nextPath = "/") {
   if (typeof window === "undefined") {
     return undefined;
   }
 
-  const url = new URL("/auth/callback", window.location.origin);
-  url.searchParams.set("next", resolveSafeNextPath(nextPath, "/"));
-  return url.toString();
+  return buildAbsoluteAuthCallbackUrl(window.location.origin, nextPath);
 }
 
 export function buildPasswordRecoveryUrl() {

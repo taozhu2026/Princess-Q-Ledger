@@ -48,7 +48,7 @@ function ProfileEditor({
   const [displayName, setDisplayName] = useState(initialDisplayName);
 
   return (
-    <div className="rounded-[24px] border border-white/70 bg-[linear-gradient(180deg,var(--surface),rgba(255,255,255,0.92))] px-4 py-4 shadow-[var(--shadow-soft)]">
+    <div className="theme-surface-card rounded-[24px] border px-4 py-4 shadow-[var(--shadow-soft)]">
       <div className="mb-4 flex items-center gap-4">
         <CatIllustration className="h-20 w-20 shrink-0" mood="happy" />
         <div>
@@ -68,7 +68,7 @@ function ProfileEditor({
       <p className="mt-3 text-sm text-[var(--muted)]">
         这个名字会显示在首页、记录列表、邀请加入后的成员展示里。
       </p>
-      <div className="mt-4 rounded-[18px] bg-[var(--card)] px-4 py-3">
+      <div className="theme-elevated-surface mt-4 rounded-[18px] px-4 py-3">
         <p className="mt-1 text-sm text-[var(--muted)]">{email}</p>
       </div>
       <div className="mt-4 flex flex-wrap gap-3">
@@ -114,7 +114,7 @@ export function SettingsScreen() {
 
   return (
     <div className="space-y-4">
-      <Card className="overflow-hidden bg-[linear-gradient(145deg,#fffaf2,#ffffff)]">
+      <Card className="theme-card-hero overflow-hidden">
         <div className="inline-flex items-center gap-2 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[var(--accent-strong)]">
           <PawPrint className="h-3.5 w-3.5" />
           SETTINGS
@@ -159,10 +159,10 @@ export function SettingsScreen() {
                   return (
                     <button
                       key={item.value}
-                      className={`rounded-[22px] border border-white/70 px-3 py-3 text-sm font-medium shadow-[var(--shadow-soft)] ${
+                      className={`rounded-[22px] border px-3 py-3 text-sm font-medium shadow-[var(--shadow-soft)] ${
                         data.preferences.themePreference === item.value
-                          ? "border-transparent bg-[linear-gradient(180deg,var(--accent-soft),rgba(255,255,255,0.82))] text-[var(--accent-strong)]"
-                          : "bg-[var(--surface)] text-[var(--muted)]"
+                          ? "border-transparent theme-active-pill text-[var(--accent-strong)]"
+                          : "border-[color:var(--panel-border-soft)] bg-[var(--surface)] text-[var(--muted)]"
                       }`}
                       onClick={() => {
                         setTheme(item.value);
@@ -234,7 +234,7 @@ export function SettingsScreen() {
             value={newCategoryName}
           />
           <select
-            className="rounded-[18px] border bg-[var(--surface)] px-4 py-3 outline-none"
+            className="theme-select-surface rounded-[18px] border px-4 py-3 outline-none"
             onChange={(event) => setNewCategoryType(event.target.value as CategoryType)}
             value={newCategoryType}
           >
@@ -265,7 +265,7 @@ export function SettingsScreen() {
             .map((category) => (
               <div
                 key={category.id}
-                className="flex items-center justify-between rounded-[22px] border border-[var(--border)] bg-[linear-gradient(180deg,var(--surface),rgba(255,255,255,0.94))] px-4 py-3"
+                className="theme-surface-card-strong flex items-center justify-between rounded-[22px] border px-4 py-3"
               >
                 <div>
                   <p className="font-medium">{category.name}</p>

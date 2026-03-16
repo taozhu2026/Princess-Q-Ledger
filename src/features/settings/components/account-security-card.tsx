@@ -29,7 +29,7 @@ export function AccountSecurityCard({
 
   if (!supabaseReady) {
     return (
-      <div className="rounded-[24px] border border-white/70 bg-[linear-gradient(180deg,var(--surface),rgba(255,255,255,0.92))] px-4 py-4 shadow-[var(--shadow-soft)]">
+      <div className="theme-surface-card rounded-[24px] border px-4 py-4 shadow-[var(--shadow-soft)]">
         <p className="text-sm font-semibold">账号安全</p>
         <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
           当前是本地演示模式，没有真实账号，也不需要设置密码。
@@ -39,7 +39,7 @@ export function AccountSecurityCard({
   }
 
   return (
-    <div className="rounded-[24px] border border-white/70 bg-[linear-gradient(180deg,var(--surface),rgba(255,255,255,0.92))] px-4 py-4 shadow-[var(--shadow-soft)]">
+    <div className="theme-surface-card rounded-[24px] border px-4 py-4 shadow-[var(--shadow-soft)]">
       <div className="mb-4 flex items-start gap-3">
         <div className="rounded-[18px] bg-[var(--accent-soft)] p-3 text-[var(--accent-strong)]">
           <KeyRound className="h-5 w-5" />

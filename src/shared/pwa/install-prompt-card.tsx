@@ -56,7 +56,7 @@ export function InstallPromptCard() {
         </div>
       </div>
 
-      <div className="mt-5 flex items-center gap-4 rounded-[24px] bg-[linear-gradient(135deg,rgba(235,243,238,0.9),rgba(255,255,255,0.92))] px-4 py-4">
+      <div className="theme-accent-card mt-5 flex items-center gap-4 rounded-[24px] px-4 py-4">
         <CatIllustration className="h-24 w-24 shrink-0" mood="happy" />
         <div>
           <p className="text-sm font-semibold">装到主屏幕后，打开就像进入自己的小 App。</p>

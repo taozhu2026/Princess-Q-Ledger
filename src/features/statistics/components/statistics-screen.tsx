@@ -36,7 +36,7 @@ export function StatisticsScreen() {
 
   return (
     <div className="space-y-4">
-      <Card className="overflow-hidden bg-[linear-gradient(145deg,#fffaf2,#ffffff)]">
+      <Card className="theme-card-hero overflow-hidden">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-[var(--pink-soft)] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[#b98484]">
@@ -49,7 +49,7 @@ export function StatisticsScreen() {
             </CardDescription>
           </div>
           <select
-            className="rounded-full border border-white/70 bg-[var(--surface)] px-4 py-2 text-sm outline-none shadow-[0_8px_16px_rgba(111,159,134,0.08)]"
+            className="theme-select-surface rounded-full border px-4 py-2 text-sm outline-none shadow-[0_8px_16px_rgba(111,159,134,0.08)]"
             onChange={(event) => setSelectedMonth(event.target.value)}
             value={monthKey}
           >
@@ -120,7 +120,7 @@ export function StatisticsScreen() {
               {statistics.memberComparison.map((member) => (
                 <div
                   key={member.memberId}
-                  className="rounded-[24px] border border-[var(--border)] bg-[linear-gradient(180deg,var(--surface),rgba(255,255,255,0.94))] px-4 py-4"
+                  className="theme-surface-card-strong rounded-[24px] border px-4 py-4"
                 >
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold">{member.displayName}</h3>

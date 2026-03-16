@@ -43,7 +43,7 @@ export function RegisterScreen({ nextPath: rawNextPath }: { nextPath?: string })
 
   return (
     <AuthShellCard
-      description="第一次使用时直接设置密码。若你的 Supabase 打开了邮箱确认，注册后会先收到一封确认邮件。"
+      description="第一次使用时直接设置密码。注册后会先收到一封确认邮件，点开后再进入账本。"
       title="创建账号"
     >
       <form
@@ -121,7 +121,7 @@ export function RegisterScreen({ nextPath: rawNextPath }: { nextPath?: string })
       </CardDescription>
 
       <p className="text-sm leading-6 text-[var(--muted)]">
-        {localMessage || signUp.data?.message || "注册完成后，系统会自动初始化你的个人账本。"}
+        {localMessage || signUp.data?.message || "确认邮箱后，系统会自动初始化你的个人账本。"}
       </p>
 
       <div className="flex items-center justify-between text-sm text-[var(--muted)]">

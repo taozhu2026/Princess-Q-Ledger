@@ -14,7 +14,7 @@ export function EmptyState({
   mood?: "sleeping" | "happy" | "confused";
 }) {
   return (
-    <div className="overflow-hidden rounded-[28px] border border-dashed border-[var(--border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(255,249,241,0.96))] px-5 py-6 text-center shadow-[var(--shadow-soft)]">
+    <div className="theme-surface-card-strong overflow-hidden rounded-[28px] border border-dashed px-5 py-6 text-center shadow-[var(--shadow-soft)]">
       <div className="relative flex justify-center">
         <div className="absolute top-4 h-20 w-20 rounded-full bg-[var(--highlight-soft)] blur-2xl" />
         <CatIllustration className="relative z-10 h-28 w-28" mood={mood} />

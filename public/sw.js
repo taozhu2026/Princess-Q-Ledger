@@ -1,22 +1,73 @@
-const CACHE_NAME = "princess-q-ledger-shell-v1";
-const APP_SHELL = ["/", "/ledger", "/statistics", "/settings", "/manifest.webmanifest"];
+const STATIC_CACHE_NAME = "princess-q-ledger-static-v2";
+const CACHEABLE_PATH_PREFIXES = [
+  "/_next/static/",
+  "/manifest.webmanifest",
+  "/icon",
+  "/apple-icon",
+];
+
+function isSameOrigin(url) {
+  return url.origin === self.location.origin;
+}
+
+function isNavigationRequest(request) {
+  return request.mode === "navigate";
+}
+
+function isCacheableStaticRequest(request) {
+  const url = new URL(request.url);
+
+  if (!isSameOrigin(url)) {
+    return false;
+  }
+
+  if (request.destination === "document") {
+    return false;
+  }
+
+  return CACHEABLE_PATH_PREFIXES.some((prefix) => url.pathname.startsWith(prefix));
+}
+
+async function cacheStaticResponse(request) {
+  const cache = await caches.open(STATIC_CACHE_NAME);
+  const cached = await cache.match(request);
+
+  if (cached) {
+    return cached;
+  }
+
+  const response = await fetch(request);
+
+  if (response.ok) {
+    await cache.put(request, response.clone()).catch(() => undefined);
+  }
+
+  return response;
+}
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).catch(() => undefined),
-  );
+  event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(
         keys
-          .filter((key) => key !== CACHE_NAME)
+          .filter((key) => key !== STATIC_CACHE_NAME)
           .map((key) => caches.delete(key)),
-      ),
-    ),
+      );
+
+      await self.clients.claim();
+    })(),
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("fetch", (event) => {
@@ -24,22 +75,14 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) {
-        return cached;
-      }
+  if (isNavigationRequest(event.request)) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
 
-      return fetch(event.request)
-        .then((response) => {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone).catch(() => undefined);
-          });
+  if (!isCacheableStaticRequest(event.request)) {
+    return;
+  }
 
-          return response;
-        })
-        .catch(() => caches.match("/"));
-    }),
-  );
+  event.respondWith(cacheStaticResponse(event.request));
 });

@@ -54,7 +54,7 @@ export function AppShell({ children }: PropsWithChildren) {
     <>
       <div className="mx-auto min-h-screen max-w-[520px] px-4 pb-32 pt-5">
         {showAppChrome ? (
-          <header className="mb-5 overflow-hidden rounded-[30px] border border-white/60 bg-[linear-gradient(145deg,rgba(255,255,255,0.95),rgba(255,249,241,0.88))] px-5 py-5 shadow-[var(--shadow-card)] backdrop-blur">
+          <header className="theme-card-shell mb-5 overflow-hidden rounded-[30px] border px-5 py-5 shadow-[var(--shadow-card)] backdrop-blur">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[var(--accent-strong)]">
@@ -105,7 +105,7 @@ export function AppShell({ children }: PropsWithChildren) {
 
         {pendingDrafts.length > 0 && showAppChrome ? (
           <button
-            className="mb-4 flex w-full items-center justify-between rounded-[26px] border border-dashed border-[rgba(111,159,134,0.26)] bg-[linear-gradient(180deg,rgba(235,243,238,0.82),rgba(255,255,255,0.94))] px-4 py-4 text-left shadow-[var(--shadow-soft)]"
+            className="theme-surface-card-strong mb-4 flex w-full items-center justify-between rounded-[26px] border border-dashed px-4 py-4 text-left shadow-[var(--shadow-soft)]"
             onClick={() => openCreate(pendingDrafts[0]?.id)}
             type="button"
           >
@@ -115,7 +115,7 @@ export function AppShell({ children }: PropsWithChildren) {
                 网络恢复后点这里继续提交，小猫会帮你把草稿守好。
               </p>
             </div>
-            <span className="rounded-full bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--accent-strong)]">
+            <span className="theme-elevated-surface rounded-full px-3 py-2 text-sm font-medium text-[var(--accent-strong)]">
               继续处理
             </span>
           </button>

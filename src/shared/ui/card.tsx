@@ -9,7 +9,7 @@ export function Card({
   return (
     <section
       className={cn(
-        "card-rise rounded-[24px] border border-white/60 bg-[var(--card)]/96 p-5 shadow-[var(--shadow-card)] backdrop-blur-sm",
+        "card-rise rounded-[24px] border border-[color:var(--panel-border)] bg-[var(--card)]/96 p-5 shadow-[var(--shadow-card)] backdrop-blur-sm",
         className,
       )}
     >

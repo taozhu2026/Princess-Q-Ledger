@@ -50,7 +50,7 @@ export function TransactionItem({
   const amountSign = transaction.type === "income" ? "+" : "-";
 
   return (
-    <article className="overflow-hidden rounded-[28px] border border-white/70 bg-[linear-gradient(180deg,var(--card),rgba(255,249,241,0.94))] p-4 shadow-[var(--shadow-card)]">
+    <article className="theme-surface-card-strong overflow-hidden rounded-[28px] border p-4 shadow-[var(--shadow-card)]">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -93,7 +93,7 @@ export function TransactionItem({
             {transaction.type !== "settlement" && onEdit ? (
               <Button
                 aria-label="编辑记录"
-                className="bg-white/70"
+                className="theme-elevated-surface"
                 onClick={() => onEdit(transaction.id)}
                 size="icon"
                 variant="ghost"
@@ -104,7 +104,7 @@ export function TransactionItem({
             {onDelete ? (
               <Button
                 aria-label="删除记录"
-                className="bg-white/70"
+                className="theme-elevated-surface"
                 onClick={() => onDelete(transaction.id)}
                 size="icon"
                 variant="ghost"

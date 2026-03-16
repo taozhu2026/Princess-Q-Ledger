@@ -53,7 +53,7 @@ export function LedgerScreen() {
 
   return (
     <div className="space-y-4">
-      <Card className="overflow-hidden bg-[linear-gradient(145deg,#fffaf2,#ffffff)]">
+      <Card className="theme-card-hero overflow-hidden">
         <div className="inline-flex items-center gap-2 rounded-full bg-[var(--highlight-soft)] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[#ba835f]">
           <PawPrint className="h-3.5 w-3.5" />
           LEDGER VIEW
@@ -70,7 +70,7 @@ export function LedgerScreen() {
 
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <select
-            className="rounded-[18px] border border-white/70 bg-[var(--surface)] px-4 py-3 text-sm outline-none shadow-[0_8px_14px_rgba(111,159,134,0.05)]"
+            className="theme-select-surface rounded-[18px] border px-4 py-3 text-sm outline-none shadow-[0_8px_14px_rgba(111,159,134,0.05)]"
             onChange={(event) => setSelectedMonth(event.target.value)}
             value={monthKey}
           >
@@ -82,7 +82,7 @@ export function LedgerScreen() {
           </select>
 
           <select
-            className="rounded-[18px] border border-white/70 bg-[var(--surface)] px-4 py-3 text-sm outline-none shadow-[0_8px_14px_rgba(111,159,134,0.05)]"
+            className="theme-select-surface rounded-[18px] border px-4 py-3 text-sm outline-none shadow-[0_8px_14px_rgba(111,159,134,0.05)]"
             onChange={(event) => setSelectedCategory(event.target.value)}
             value={selectedCategory}
           >
@@ -97,7 +97,7 @@ export function LedgerScreen() {
           </select>
 
           <select
-            className="rounded-[18px] border border-white/70 bg-[var(--surface)] px-4 py-3 text-sm outline-none shadow-[0_8px_14px_rgba(111,159,134,0.05)]"
+            className="theme-select-surface rounded-[18px] border px-4 py-3 text-sm outline-none shadow-[0_8px_14px_rgba(111,159,134,0.05)]"
             onChange={(event) => setSelectedPayer(event.target.value)}
             value={selectedPayer}
           >
@@ -110,7 +110,7 @@ export function LedgerScreen() {
           </select>
 
           <select
-            className="rounded-[18px] border border-white/70 bg-[var(--surface)] px-4 py-3 text-sm outline-none shadow-[0_8px_14px_rgba(111,159,134,0.05)]"
+            className="theme-select-surface rounded-[18px] border px-4 py-3 text-sm outline-none shadow-[0_8px_14px_rgba(111,159,134,0.05)]"
             onChange={(event) => setSelectedType(event.target.value)}
             value={selectedType}
           >

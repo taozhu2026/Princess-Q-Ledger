@@ -19,7 +19,7 @@ export function AuthShellCard({
 }>) {
   return (
     <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-[460px] items-center">
-      <Card className="w-full overflow-hidden bg-[linear-gradient(145deg,#fffaf2,#ffffff)]">
+      <Card className="theme-card-hero w-full overflow-hidden">
         <ButtonLink className="mb-4 w-fit px-3" href="/" size="sm" variant="ghost">
           <ChevronLeft className="mr-1 h-4 w-4" />
           回到首页

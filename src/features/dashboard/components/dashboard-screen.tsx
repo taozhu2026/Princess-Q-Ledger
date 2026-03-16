@@ -76,7 +76,7 @@ export function DashboardScreen() {
 
   return (
     <div className="space-y-4">
-      <Card className="overflow-hidden bg-[linear-gradient(145deg,#fff8ef,#fffdf9)]">
+      <Card className="theme-card-hero overflow-hidden">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[11px] font-semibold tracking-[0.18em] text-[var(--accent-strong)]">
@@ -93,7 +93,7 @@ export function DashboardScreen() {
           <CatIllustration className="h-24 w-24 shrink-0" mood="happy" />
         </div>
 
-        <div className="mt-5 flex items-center justify-between gap-3 rounded-[24px] bg-[linear-gradient(135deg,var(--accent-soft),rgba(255,255,255,0.92))] px-4 py-4">
+        <div className="theme-accent-card mt-5 flex items-center justify-between gap-3 rounded-[24px] px-4 py-4">
           <div>
             <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
               这个月的状态
@@ -103,7 +103,7 @@ export function DashboardScreen() {
             </p>
           </div>
           <select
-            className="rounded-full border border-white/70 bg-white/90 px-4 py-2 text-sm outline-none shadow-[0_8px_16px_rgba(111,159,134,0.08)]"
+            className="theme-select-surface rounded-full border px-4 py-2 text-sm outline-none shadow-[0_8px_16px_rgba(111,159,134,0.08)]"
             onChange={(event) => setSelectedMonth(event.target.value)}
             value={monthKey}
           >
@@ -157,7 +157,7 @@ export function DashboardScreen() {
         </div>
 
         {settlement.suggestedTransfer ? (
-          <div className="mt-5 rounded-[26px] bg-[linear-gradient(135deg,var(--highlight-soft),rgba(255,255,255,0.95))] p-5 shadow-[var(--shadow-soft)]">
+          <div className="theme-highlight-card mt-5 rounded-[26px] p-5 shadow-[var(--shadow-soft)]">
             <p className="text-sm text-[var(--muted)]">今天的小建议</p>
             <p className="mt-2 text-xl font-semibold leading-8">
               {getMemberName(settlement.suggestedTransfer.fromMemberId)} 应转给{" "}
@@ -194,7 +194,7 @@ export function DashboardScreen() {
           {settlement.memberBalances.map((balance) => (
             <div
               key={balance.memberId}
-              className="flex items-center justify-between rounded-[22px] border border-[var(--border)] bg-[linear-gradient(180deg,var(--surface),rgba(255,255,255,0.92))] px-4 py-3"
+              className="theme-surface-card-strong flex items-center justify-between rounded-[22px] border px-4 py-3"
             >
               <div>
                 <p className="font-medium">{balance.displayName}</p>

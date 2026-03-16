@@ -55,7 +55,7 @@ export function ForgotPasswordScreen({ nextPath: rawNextPath }: { nextPath?: str
 
       <p className="text-sm leading-6 text-[var(--muted)]">
         {sendResetEmail.data?.message ||
-          "如果邮箱没有收到邮件，先确认垃圾箱，再确认 Supabase Auth 的自定义 SMTP 和重置密码模板已经启用。"}
+          "如果邮箱没有收到邮件，先确认垃圾箱，再确认管理员已经配置好 Resend 发信域名和服务端密钥。"}
       </p>
 
       <div className="flex items-center justify-between text-sm text-[var(--muted)]">

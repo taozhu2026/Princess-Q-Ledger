@@ -23,13 +23,22 @@ npm run dev
 如果要接入 Supabase：
 
 1. 复制 `.env.example` 为 `.env.local`
-2. 填入 `NEXT_PUBLIC_SUPABASE_URL` 和 `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+2. 填入：
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `RESEND_API_KEY`
+   - `AUTH_EMAIL_FROM`
+   - 可选：`AUTH_EMAIL_REPLY_TO`、`AUTH_EMAIL_PRODUCT_NAME`
 3. 在 Supabase 中依次执行：
    - `supabase/migrations/202603160001_init.sql`
    - `supabase/migrations/202603160002_real_data_foundation.sql`
    - `supabase/migrations/202603160003_fix_recursive_rls.sql`
-4. 在 Supabase Auth 的邮箱登录里开启 Magic Link
-5. 把站点 URL 和重定向 URL 配到 `/auth/callback`
+4. 在 Resend 中验证发信域名，并确保 `AUTH_EMAIL_FROM` 使用该域名下的发件地址
+5. 在 Supabase Auth 的 URL Configuration 中，把站点 URL 和 Redirect URLs 配到 `/auth/callback`
+6. 重新部署，让服务端环境变量生效
+
+项目现在会由应用服务端调用 Supabase Admin 生成注册确认 / Magic Link / 重置密码链接，再通过 Resend 发出事务邮件，不再依赖 Supabase 默认测试 SMTP。
 
 ## 当前实现
 

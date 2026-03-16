@@ -19,6 +19,18 @@
   --ring: rgba(111, 159, 134, 0.28);
   --shadow-soft: 0 6px 18px rgba(44, 44, 44, 0.06);
   --shadow-card: 0 16px 32px rgba(111, 159, 134, 0.08);
+  --panel-border: rgba(255, 255, 255, 0.62);
+  --panel-border-soft: rgba(255, 255, 255, 0.72);
+  --panel-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 249, 241, 0.88));
+  --hero-gradient: linear-gradient(145deg, #fffaf2, #ffffff);
+  --surface-panel-gradient: linear-gradient(180deg, var(--surface), rgba(255, 255, 255, 0.92));
+  --surface-panel-gradient-strong: linear-gradient(180deg, var(--surface), rgba(255, 255, 255, 0.94));
+  --accent-panel-gradient: linear-gradient(135deg, var(--accent-soft), rgba(255, 255, 255, 0.92));
+  --highlight-panel-gradient: linear-gradient(135deg, var(--highlight-soft), rgba(255, 255, 255, 0.95));
+  --nav-panel-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 249, 241, 0.92));
+  --active-pill-gradient: linear-gradient(180deg, var(--accent-soft), rgba(255, 255, 255, 0.8));
+  --surface-raised: rgba(255, 255, 255, 0.9);
+  --input-focus-surface: #ffffff;
 }
 
 @theme inline {
@@ -49,6 +61,18 @@
   --ring: rgba(168, 198, 181, 0.28);
   --shadow-soft: 0 10px 28px rgba(0, 0, 0, 0.26);
   --shadow-card: 0 18px 40px rgba(0, 0, 0, 0.24);
+  --panel-border: rgba(232, 223, 211, 0.12);
+  --panel-border-soft: rgba(232, 223, 211, 0.16);
+  --panel-gradient: linear-gradient(145deg, rgba(41, 50, 46, 0.96), rgba(28, 34, 31, 0.98));
+  --hero-gradient: linear-gradient(145deg, rgba(45, 54, 50, 0.98), rgba(31, 38, 35, 0.98));
+  --surface-panel-gradient: linear-gradient(180deg, rgba(45, 54, 50, 0.96), rgba(34, 41, 38, 0.98));
+  --surface-panel-gradient-strong: linear-gradient(180deg, rgba(48, 58, 53, 0.96), rgba(36, 43, 40, 0.98));
+  --accent-panel-gradient: linear-gradient(135deg, rgba(168, 198, 181, 0.18), rgba(34, 41, 38, 0.98));
+  --highlight-panel-gradient: linear-gradient(135deg, rgba(242, 201, 166, 0.14), rgba(35, 42, 39, 0.98));
+  --nav-panel-gradient: linear-gradient(180deg, rgba(38, 46, 43, 0.96), rgba(27, 33, 30, 0.98));
+  --active-pill-gradient: linear-gradient(180deg, rgba(168, 198, 181, 0.2), rgba(43, 52, 47, 0.98));
+  --surface-raised: rgba(58, 69, 63, 0.82);
+  --input-focus-surface: #303933;
 }
 
 html {
@@ -144,6 +168,53 @@ textarea {
 
 .dark body::after {
   opacity: 0.28;
+}
+
+.theme-card-shell {
+  border-color: var(--panel-border);
+  background-image: var(--panel-gradient);
+}
+
+.theme-card-hero {
+  border-color: var(--panel-border);
+  background-image: var(--hero-gradient);
+}
+
+.theme-surface-card {
+  border-color: var(--panel-border-soft);
+  background-image: var(--surface-panel-gradient);
+}
+
+.theme-surface-card-strong {
+  border-color: var(--border);
+  background-image: var(--surface-panel-gradient-strong);
+}
+
+.theme-accent-card {
+  background-image: var(--accent-panel-gradient);
+}
+
+.theme-highlight-card {
+  background-image: var(--highlight-panel-gradient);
+}
+
+.theme-nav-shell {
+  border-color: var(--panel-border);
+  background-image: var(--nav-panel-gradient);
+}
+
+.theme-active-pill {
+  background-image: var(--active-pill-gradient);
+}
+
+.theme-elevated-surface {
+  background-color: var(--surface-raised);
+}
+
+.theme-select-surface {
+  border-color: var(--panel-border-soft);
+  background-color: var(--surface-raised);
+  color: var(--foreground);
 }
 
 #__next,

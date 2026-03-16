@@ -51,7 +51,7 @@ export function LedgerErrorCard({ message }: { message: string }) {
           <p>1. Vercel 里配置了 `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`，但 Supabase migration 还没执行。</p>
           <p>2. `profiles` 表、`bootstrap_ledger` / `accept_invitation` RPC 或系统分类还没建出来。</p>
           <p>3. 改了 Vercel 环境变量，但没有重新部署。</p>
-          <p>4. Supabase Auth 还没开启邮箱 Magic Link，或回调地址没配到 `/auth/callback`。</p>
+          <p>4. `/auth/callback` 没配进 Supabase Redirect URLs，或者服务端缺少 `SUPABASE_SERVICE_ROLE_KEY` / `RESEND_API_KEY` / `AUTH_EMAIL_FROM`。</p>
           {!supabaseEnvConfigured ? (
             <p>5. 当前前端没有读取到公开 Supabase 环境变量，所以不会走真实数据模式。</p>
           ) : null}

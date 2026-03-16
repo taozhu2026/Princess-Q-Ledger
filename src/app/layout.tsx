@@ -1,22 +1,12 @@
 import type { Metadata, Viewport } from "next";
 
 import { AppShell } from "@/features/layout/components/app-shell";
+import { ROOT_METADATA } from "@/shared/config/metadata";
 import { AppProviders } from "@/shared/providers/app-providers";
-import { APP_DESCRIPTION, APP_NAME } from "@/shared/config/app";
 
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: APP_NAME,
-  description: APP_DESCRIPTION,
-  applicationName: APP_NAME,
-  manifest: "/manifest.webmanifest",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: APP_NAME,
-  },
-};
+export const metadata: Metadata = ROOT_METADATA;
 
 export const viewport: Viewport = {
   themeColor: "#f7f3ec",

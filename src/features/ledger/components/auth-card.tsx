@@ -17,7 +17,7 @@ export function AuthCard({
   description?: string;
 }) {
   return (
-    <Card className="mx-auto max-w-[460px] overflow-hidden bg-[linear-gradient(145deg,#fffaf2,#ffffff)]">
+    <Card className="theme-card-hero mx-auto max-w-[460px] overflow-hidden">
       <div className="flex flex-col items-center text-center">
         <div className="inline-flex items-center gap-2 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[var(--accent-strong)]">
           <PawPrint className="h-3.5 w-3.5" />
@@ -43,7 +43,7 @@ export function AuthCard({
         </ButtonLink>
       </div>
 
-      <div className="mt-5 rounded-[22px] bg-[var(--surface)] px-4 py-4 text-sm text-[var(--muted)]">
+      <div className="theme-surface-card mt-5 rounded-[22px] border px-4 py-4 text-sm text-[var(--muted)]">
         <p className="font-medium text-[var(--foreground)]">备用方式</p>
         <p className="mt-2 leading-6">
           如果你之前只用过邮箱链接登录，也可以在登录页底部继续用 Magic Link，或者直接走忘记密码来补设密码。

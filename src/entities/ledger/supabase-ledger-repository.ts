@@ -17,12 +17,9 @@ import type {
   TransactionInput,
   TransactionShare,
 } from "@/entities/ledger/types";
+import { sendAuthEmailRequest } from "@/shared/lib/auth-email/client";
 import { toAuthMessage } from "@/shared/lib/supabase/auth-message";
 import { createSupabaseBrowserClient } from "@/shared/lib/supabase/browser";
-import {
-  buildAuthCallbackUrl,
-  buildPasswordRecoveryUrl,
-} from "@/shared/lib/supabase/paths";
 
 function requireClient() {
   const client = createSupabaseBrowserClient();
@@ -767,62 +764,20 @@ export const supabaseLedgerRepository: LedgerRepository = {
   },
 
   async signUpWithPassword(input: PasswordSignUpInput) {
-    const supabase = requireClient();
-    const { data, error } = await supabase.auth.signUp({
+    return sendAuthEmailRequest({
+      action: "signup",
       email: input.email.trim(),
       password: input.password,
-      options: {
-        data: input.displayName?.trim()
-          ? {
-              display_name: input.displayName.trim(),
-            }
-          : undefined,
-        emailRedirectTo: buildAuthCallbackUrl(input.nextPath ?? "/"),
-      },
+      displayName: input.displayName?.trim() || undefined,
+      nextPath: input.nextPath ?? "/",
     });
-
-    if (error) {
-      return {
-        ok: false,
-        message: toAuthMessage(error.message),
-        nextStep: "signed_out",
-      };
-    }
-
-    if (data.session) {
-      return {
-        ok: true,
-        message: "注册完成，正在进入你的账本。",
-        nextStep: "signed_in",
-      };
-    }
-
-    return {
-      ok: true,
-      message: "注册成功，请先去邮箱确认账号，再回来登录。",
-      nextStep: "check_email",
-    };
   },
 
   async sendPasswordResetEmail(input: PasswordResetRequestInput) {
-    const supabase = requireClient();
-    const { error } = await supabase.auth.resetPasswordForEmail(input.email.trim(), {
-      redirectTo: buildPasswordRecoveryUrl(),
+    return sendAuthEmailRequest({
+      action: "recovery",
+      email: input.email.trim(),
     });
-
-    if (error) {
-      return {
-        ok: false,
-        message: toAuthMessage(error.message),
-        nextStep: "signed_out",
-      };
-    }
-
-    return {
-      ok: true,
-      message: "重置密码邮件已经发出，请回邮箱继续完成设置。",
-      nextStep: "check_email",
-    };
   },
 
   async updatePassword(input: PasswordUpdateInput) {
@@ -847,27 +802,11 @@ export const supabaseLedgerRepository: LedgerRepository = {
   },
 
   async sendMagicLink(email, nextPath = "/") {
-    const supabase = requireClient();
-    const { error } = await supabase.auth.signInWithOtp({
+    return sendAuthEmailRequest({
+      action: "magiclink",
       email: email.trim(),
-      options: {
-        emailRedirectTo: buildAuthCallbackUrl(nextPath),
-      },
+      nextPath,
     });
-
-    if (error) {
-      return {
-        ok: false,
-        message: toAuthMessage(error.message),
-        nextStep: "signed_out",
-      };
-    }
-
-    return {
-      ok: true,
-      message: "登录链接已经发到邮箱，请在同一台设备上打开。",
-      nextStep: "check_email",
-    };
   },
 
   async signOut() {
