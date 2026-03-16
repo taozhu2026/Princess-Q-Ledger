@@ -1,22 +1,19 @@
 "use client";
 
-import { AlertTriangle, LoaderCircle } from "lucide-react";
-
 import { Button } from "@/shared/ui/button";
+import { CatIllustration } from "@/shared/ui/cat-illustration";
 import { Card, CardDescription, CardTitle } from "@/shared/ui/card";
 
 export function LedgerLoadingCard() {
   return (
     <div className="flex min-h-[70vh] items-center justify-center">
       <Card className="mx-auto max-w-[460px]">
-        <div className="flex items-center gap-3">
-          <div className="rounded-2xl bg-[var(--accent-soft)] p-3 text-[var(--accent)]">
-            <LoaderCircle className="h-5 w-5 animate-spin" />
-          </div>
-          <div>
-            <CardTitle>正在连接账本</CardTitle>
+        <div className="flex flex-col items-center text-center">
+          <CatIllustration className="h-28 w-28" mood="sleeping" />
+          <div className="mt-4">
+            <CardTitle>正在把账本抱过来</CardTitle>
             <CardDescription className="mt-2">
-              正在读取账本、成员和最近交易数据。
+              小猫正在读取你的成员、交易和最近状态，马上就好。
             </CardDescription>
           </div>
         </div>
@@ -34,14 +31,12 @@ export function LedgerErrorCard({ message }: { message: string }) {
   return (
     <div className="flex min-h-[70vh] items-center justify-center">
       <Card className="mx-auto max-w-[520px]">
-        <div className="flex items-start gap-3">
-          <div className="rounded-2xl bg-[rgba(191,93,83,0.14)] p-3 text-[var(--danger)]">
-            <AlertTriangle className="h-5 w-5" />
-          </div>
-          <div>
-            <CardTitle>账本数据加载失败</CardTitle>
+        <div className="flex flex-col items-center text-center">
+          <CatIllustration className="h-28 w-28" mood="confused" />
+          <div className="mt-4">
+            <CardTitle>小猫暂时没把数据搬出来</CardTitle>
             <CardDescription className="mt-2">
-              页面不是没有界面，而是启动后第一条账本查询报错了，所以之前被渲染成了空白。
+              页面不是没有界面，而是启动后的第一条账本查询报错了，所以内容没有继续展开。
             </CardDescription>
           </div>
         </div>

@@ -9,7 +9,7 @@ export function Card({
   return (
     <section
       className={cn(
-        "rounded-[28px] border border-[var(--border)] bg-[var(--card)]/95 p-5 shadow-[var(--shadow-soft)] backdrop-blur",
+        "card-rise rounded-[24px] border border-white/60 bg-[var(--card)]/96 p-5 shadow-[var(--shadow-card)] backdrop-blur-sm",
         className,
       )}
     >
@@ -23,7 +23,7 @@ export function CardTitle({
   className,
 }: PropsWithChildren<{ className?: string }>) {
   return (
-    <h2 className={cn("text-base font-semibold tracking-[0.01em]", className)}>
+    <h2 className={cn("text-[15px] font-semibold tracking-[0.01em] text-[var(--foreground)]", className)}>
       {children}
     </h2>
   );

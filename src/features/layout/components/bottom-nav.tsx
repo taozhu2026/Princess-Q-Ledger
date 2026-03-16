@@ -11,7 +11,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-[520px] px-4 pb-4">
-      <div className="grid grid-cols-4 rounded-[26px] border border-[var(--border)] bg-[var(--card)]/92 px-2 py-2 shadow-[0_24px_40px_rgba(21,31,29,0.12)] backdrop-blur">
+      <div className="grid grid-cols-4 rounded-[28px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,249,241,0.92))] px-2 py-2 shadow-[0_20px_34px_rgba(111,159,134,0.14)] backdrop-blur">
         {navigationItems.map((item) => {
           const active =
             item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
@@ -22,13 +22,20 @@ export function BottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-medium transition",
+                "flex flex-col items-center gap-1 rounded-[20px] px-2 py-2 text-[11px] font-medium transition duration-200 ease-out",
                 active
-                  ? "bg-[var(--accent-soft)] text-[var(--accent)]"
-                  : "text-[var(--muted)]",
+                  ? "bg-[linear-gradient(180deg,var(--accent-soft),rgba(255,255,255,0.8))] text-[var(--accent-strong)] shadow-[0_8px_16px_rgba(111,159,134,0.12)]"
+                  : "text-[var(--muted)] hover:bg-[var(--surface)]",
               )}
             >
-              <Icon className="h-5 w-5" />
+              <span
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-full",
+                  active ? "bg-white/80" : "bg-transparent",
+                )}
+              >
+                <Icon className="h-4 w-4" />
+              </span>
               <span>{item.label}</span>
             </Link>
           );

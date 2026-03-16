@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Trash2 } from "lucide-react";
+import { PawPrint, Pencil, Trash2 } from "lucide-react";
 
 import type { BookMember, Category, Transaction, TransactionShare } from "@/entities/ledger";
 import { formatCurrency, formatShortDate, formatTime } from "@/shared/lib/utils";
@@ -50,12 +50,12 @@ export function TransactionItem({
   const amountSign = transaction.type === "income" ? "+" : "-";
 
   return (
-    <article className="rounded-[26px] border border-[var(--border)] bg-[var(--card)]/95 p-4 shadow-[var(--shadow-soft)]">
+    <article className="overflow-hidden rounded-[28px] border border-white/70 bg-[linear-gradient(180deg,var(--card),rgba(255,249,241,0.94))] p-4 shadow-[var(--shadow-card)]">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <span
-              className="rounded-full px-3 py-1 text-xs font-medium"
+              className="rounded-full px-3 py-1 text-xs font-medium shadow-[0_6px_14px_rgba(0,0,0,0.05)]"
               style={{
                 backgroundColor: `${category?.color ?? "#ded8ca"}33`,
                 color: category?.color ?? "var(--foreground)",
@@ -68,9 +68,12 @@ export function TransactionItem({
             </span>
           </div>
           <h3 className="mt-3 text-base font-semibold">{transaction.note || "未填写备注"}</h3>
-          <p className="mt-2 text-sm text-[var(--muted)]">
-            {payer?.displayName ?? "未知"} 付款 · {buildShareText(transaction, shares, payer)}
-          </p>
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-[var(--surface)] px-3 py-2 text-sm text-[var(--muted)]">
+            <PawPrint className="h-3.5 w-3.5 text-[var(--accent)]" />
+            <span>
+              {payer?.displayName ?? "未知"} 付款 · {buildShareText(transaction, shares, payer)}
+            </span>
+          </div>
         </div>
 
         <div className="text-right">
@@ -90,6 +93,7 @@ export function TransactionItem({
             {transaction.type !== "settlement" && onEdit ? (
               <Button
                 aria-label="编辑记录"
+                className="bg-white/70"
                 onClick={() => onEdit(transaction.id)}
                 size="icon"
                 variant="ghost"
@@ -100,6 +104,7 @@ export function TransactionItem({
             {onDelete ? (
               <Button
                 aria-label="删除记录"
+                className="bg-white/70"
                 onClick={() => onDelete(transaction.id)}
                 size="icon"
                 variant="ghost"

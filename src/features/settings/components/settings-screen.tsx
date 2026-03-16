@@ -7,6 +7,7 @@ import {
   Link2,
   LogOut,
   MoonStar,
+  PawPrint,
   RefreshCw,
   SunMedium,
 } from "lucide-react";
@@ -27,7 +28,9 @@ import { useTransactionComposerStore } from "@/features/transactions/store/trans
 import { InstallPromptCard } from "@/shared/pwa/install-prompt-card";
 import { copyText } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
+import { CatIllustration } from "@/shared/ui/cat-illustration";
 import { Card, CardDescription, CardTitle } from "@/shared/ui/card";
+import { EmptyState } from "@/shared/ui/empty-state";
 
 function ProfileEditor({
   email,
@@ -43,7 +46,16 @@ function ProfileEditor({
   const [displayName, setDisplayName] = useState(initialDisplayName);
 
   return (
-    <div className="rounded-[22px] border bg-[var(--surface)] px-4 py-4">
+    <div className="rounded-[24px] border border-white/70 bg-[linear-gradient(180deg,var(--surface),rgba(255,255,255,0.92))] px-4 py-4 shadow-[var(--shadow-soft)]">
+      <div className="mb-4 flex items-center gap-4">
+        <CatIllustration className="h-20 w-20 shrink-0" mood="happy" />
+        <div>
+          <p className="text-sm font-semibold">你的名字会显示在首页和账单里</p>
+          <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
+            不用很正式，填一个你自己喜欢看到的称呼就可以。
+          </p>
+        </div>
+      </div>
       <label className="block text-sm font-medium">显示名称</label>
       <input
         className="mt-2 w-full rounded-[18px] border bg-[var(--card)] px-4 py-3 outline-none"
@@ -100,8 +112,12 @@ export function SettingsScreen() {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardTitle>账号与主题</CardTitle>
+      <Card className="overflow-hidden bg-[linear-gradient(145deg,#fffaf2,#ffffff)]">
+        <div className="inline-flex items-center gap-2 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[var(--accent-strong)]">
+          <PawPrint className="h-3.5 w-3.5" />
+          SETTINGS
+        </div>
+        <CardTitle className="mt-3 text-[24px] tracking-[-0.02em]">账号与主题</CardTitle>
         <CardDescription className="mt-2">
           {supabaseReady
             ? "昵称和邮箱都绑定到当前登录账号，账本与交易会围绕这个真实身份展开。"
@@ -133,9 +149,9 @@ export function SettingsScreen() {
                 return (
                   <button
                     key={item.value}
-                    className={`rounded-[20px] border px-3 py-3 text-sm font-medium ${
+                    className={`rounded-[22px] border border-white/70 px-3 py-3 text-sm font-medium shadow-[var(--shadow-soft)] ${
                       data.preferences.themePreference === item.value
-                        ? "border-transparent bg-[var(--accent-soft)] text-[var(--accent)]"
+                        ? "border-transparent bg-[linear-gradient(180deg,var(--accent-soft),rgba(255,255,255,0.82))] text-[var(--accent-strong)]"
                         : "bg-[var(--surface)] text-[var(--muted)]"
                     }`}
                     onClick={() => {
@@ -238,7 +254,7 @@ export function SettingsScreen() {
             .map((category) => (
               <div
                 key={category.id}
-                className="flex items-center justify-between rounded-[22px] border border-[var(--border)] bg-[var(--surface)] px-4 py-3"
+                className="flex items-center justify-between rounded-[22px] border border-[var(--border)] bg-[linear-gradient(180deg,var(--surface),rgba(255,255,255,0.94))] px-4 py-3"
               >
                 <div>
                   <p className="font-medium">{category.name}</p>
@@ -256,9 +272,10 @@ export function SettingsScreen() {
             ))}
 
           {data.categories.every((category) => category.isSystem) ? (
-            <p className="rounded-[22px] bg-[var(--surface)] px-4 py-4 text-sm text-[var(--muted)]">
-              还没有自定义分类。
-            </p>
+            <EmptyState
+              description="系统分类已经够你先开始用了。等账本更稳定以后，再慢慢补自己的分类。"
+              title="还没有自定义分类"
+            />
           ) : null}
         </div>
       </Card>

@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "情侣共享记账，支持结算、统计和离线草稿。",
     start_url: "/",
     display: "standalone",
-    background_color: "#f4eee3",
-    theme_color: "#edf1e7",
+    background_color: "#f7f3ec",
+    theme_color: "#f7f3ec",
     lang: "zh-CN",
     icons: [
       {
