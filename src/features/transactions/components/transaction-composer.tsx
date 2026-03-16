@@ -14,6 +14,7 @@ import {
 } from "@/features/transactions/api/use-ledger-data";
 import {
   type TransactionFormState,
+  type TransactionShareFormState,
   useTransactionComposerStore,
 } from "@/features/transactions/store/transaction-composer-store";
 import { getErrorMessage } from "@/shared/lib/errors";
@@ -46,9 +47,147 @@ function splitEvenly(memberIds: string[], amount: number) {
   });
 }
 
+function formatShareAmount(value: number) {
+  if (value <= 0) {
+    return "";
+  }
+
+  return String(Number(value.toFixed(2)));
+}
+
+function buildEmptyCustomShareDraft(memberIds: string[]): TransactionShareFormState[] {
+  return memberIds.map((memberId) => ({
+    memberId,
+    shareAmount: "",
+  }));
+}
+
+function buildPresetCustomShareDraft({
+  memberIds,
+  amount,
+  payerMemberId,
+  preset,
+}: {
+  memberIds: string[];
+  amount: number;
+  payerMemberId: string;
+  preset: "equal" | "self" | "custom";
+}) {
+  if (preset === "equal") {
+    return splitEvenly(memberIds, amount).map((share) => ({
+      memberId: share.memberId,
+      shareAmount: formatShareAmount(share.shareAmount),
+    }));
+  }
+
+  if (preset === "custom") {
+    return buildEmptyCustomShareDraft(memberIds);
+  }
+
+  return memberIds.map((memberId) => ({
+    memberId,
+    shareAmount: memberId === payerMemberId ? formatShareAmount(amount) : "",
+  }));
+}
+
+function normalizeCustomShareDraft(
+  memberIds: string[],
+  draft: unknown,
+  fallback: TransactionShareFormState[],
+) {
+  if (!Array.isArray(draft)) {
+    return fallback;
+  }
+
+  const valueMap = new Map<string, string>();
+
+  for (const entry of draft) {
+    if (
+      typeof entry === "object" &&
+      entry !== null &&
+      "memberId" in entry &&
+      typeof entry.memberId === "string"
+    ) {
+      const shareAmount =
+        "shareAmount" in entry && typeof entry.shareAmount === "string"
+          ? clampCurrencyInput(entry.shareAmount)
+          : "";
+
+      valueMap.set(entry.memberId, shareAmount);
+    }
+  }
+
+  return memberIds.map((memberId) => ({
+    memberId,
+    shareAmount: valueMap.get(memberId) ?? "",
+  }));
+}
+
+function normalizeFormState(
+  form: Partial<TransactionFormState>,
+  memberIds: string[],
+  fallbackPayerMemberId: string,
+): TransactionFormState {
+  const payerMemberId = form.payerMemberId || fallbackPayerMemberId;
+  const splitPreset = form.splitPreset ?? "equal";
+  const fallbackCustomShares = buildPresetCustomShareDraft({
+    memberIds,
+    amount: Number(form.amount ?? 0),
+    payerMemberId,
+    preset: splitPreset === "custom" ? "equal" : splitPreset,
+  });
+
+  return {
+    type: form.type ?? "expense",
+    amount: form.amount ?? "",
+    categoryId: form.categoryId ?? "",
+    payerMemberId,
+    occurredAt: form.occurredAt ?? toDateTimeInput(new Date().toISOString()),
+    note: form.note ?? "",
+    splitPreset,
+    customShareAmounts: normalizeCustomShareDraft(
+      memberIds,
+      form.customShareAmounts,
+      fallbackCustomShares,
+    ),
+  };
+}
+
+function hasMeaningfulCustomShares(customShareAmounts: TransactionShareFormState[]) {
+  return customShareAmounts.some((entry) => Number(entry.shareAmount || 0) > 0);
+}
+
+function buildCustomShareInputs(
+  customShareAmounts: TransactionShareFormState[],
+  totalAmount: number,
+) {
+  const shareInputs = customShareAmounts
+    .map((entry) => ({
+      memberId: entry.memberId,
+      shareAmount: Number(entry.shareAmount || 0),
+    }))
+    .filter((entry) => entry.shareAmount > 0);
+
+  const assignedAmount = shareInputs.reduce(
+    (total, entry) => total + entry.shareAmount,
+    0,
+  );
+
+  return {
+    assignedAmount: Number(assignedAmount.toFixed(2)),
+    shareInputs: shareInputs.map((entry) => ({
+      memberId: entry.memberId,
+      shareAmount: Number(entry.shareAmount.toFixed(2)),
+      shareRatio: totalAmount > 0 ? entry.shareAmount / totalAmount : null,
+      isSettlementImpact: false,
+    })),
+  };
+}
+
 function buildDefaultForm(
   viewerMemberId: string,
   categoryId: string,
+  memberIds: string[],
 ): TransactionFormState {
   return {
     type: "expense",
@@ -58,6 +197,7 @@ function buildDefaultForm(
     occurredAt: toDateTimeInput(new Date().toISOString()),
     note: "",
     splitPreset: "equal",
+    customShareAmounts: buildEmptyCustomShareDraft(memberIds),
   };
 }
 
@@ -85,19 +225,28 @@ export function TransactionComposer() {
     ? data.transactions.find((entry) => entry.id === editingTransactionId)
     : null;
   const viewerMemberId = data.viewerMembership?.id ?? data.members[0]?.id ?? "";
+  const memberIds = data.members.map((member) => member.id);
 
-  let initialForm = buildDefaultForm(viewerMemberId, fallbackCategoryId);
+  let initialForm = buildDefaultForm(viewerMemberId, fallbackCategoryId, memberIds);
 
   if (draft) {
-    initialForm = draft.payload;
+    initialForm = normalizeFormState(draft.payload, memberIds, viewerMemberId);
   } else if (transaction) {
     const shares = getTransactionShares(data, transaction.id);
+    const hasNonPayerShares = shares.some(
+      (share) =>
+        share.memberId !== transaction.payerMemberId && share.shareAmount > 0.009,
+    );
     const splitPreset =
-      transaction.type === "expense" && transaction.isShared && shares.length > 1
-        ? "equal"
-        : "self";
+      transaction.type !== "expense"
+        ? "self"
+        : transaction.splitMethod === "equal" && transaction.isShared && shares.length > 1
+          ? "equal"
+          : hasNonPayerShares
+            ? "custom"
+            : "self";
 
-    initialForm = {
+    initialForm = normalizeFormState({
       type: transaction.type,
       amount: String(transaction.amount),
       categoryId: transaction.categoryId,
@@ -105,7 +254,13 @@ export function TransactionComposer() {
       occurredAt: toDateTimeInput(transaction.occurredAt),
       note: transaction.note,
       splitPreset,
-    };
+      customShareAmounts: memberIds.map((memberId) => ({
+        memberId,
+        shareAmount: formatShareAmount(
+          shares.find((share) => share.memberId === memberId)?.shareAmount ?? 0,
+        ),
+      })),
+    }, memberIds, viewerMemberId);
   }
 
   return (
@@ -163,6 +318,16 @@ function TransactionComposerSheet({
       ? category.type === "income"
       : category.type === "expense",
   );
+  const parsedAmount = Number(form.amount);
+  const customShareDraft = normalizeCustomShareDraft(
+    data.members.map((member) => member.id),
+    form.customShareAmounts,
+    buildEmptyCustomShareDraft(data.members.map((member) => member.id)),
+  );
+  const customShareSummary = buildCustomShareInputs(customShareDraft, parsedAmount || 0);
+  const remainingCustomAmount = Number(
+    ((parsedAmount || 0) - customShareSummary.assignedAmount).toFixed(2),
+  );
 
   const submit = async () => {
     const amount = Number(form.amount);
@@ -197,14 +362,32 @@ function TransactionComposerSheet({
               data.members.map((member) => member.id),
               amount,
             )
-          : [
-              {
-                memberId: form.payerMemberId,
-                shareAmount: amount,
-                shareRatio: 1,
-                isSettlementImpact: false,
-              },
-            ];
+          : form.splitPreset === "custom"
+            ? customShareSummary.shareInputs
+            : [
+                {
+                  memberId: form.payerMemberId,
+                  shareAmount: amount,
+                  shareRatio: 1,
+                  isSettlementImpact: false,
+                },
+              ];
+
+    if (form.type === "expense" && form.splitPreset === "custom") {
+      if (shareInputs.length === 0) {
+        setLocalMessage("请至少给一位成员分配金额。");
+        return;
+      }
+
+      if (Math.abs(customShareSummary.assignedAmount - amount) > 0.01) {
+        setLocalMessage(`分摊金额合计需要刚好等于 ${amount.toFixed(2)} 元。`);
+        return;
+      }
+    }
+
+    const isSharedExpense =
+      form.type === "expense" &&
+      shareInputs.some((share) => share.memberId !== form.payerMemberId);
 
     const input: TransactionInput = {
       type: form.type,
@@ -213,7 +396,7 @@ function TransactionComposerSheet({
       payerMemberId: form.payerMemberId,
       occurredAt: fromDateTimeInput(form.occurredAt),
       note: form.note,
-      isShared: form.type === "expense" ? form.splitPreset === "equal" : false,
+      isShared: isSharedExpense,
       splitMethod:
         form.type === "expense" && form.splitPreset === "equal"
           ? "equal"
@@ -301,6 +484,15 @@ function TransactionComposerSheet({
                               )?.id ?? "",
                             splitPreset:
                               item.value === "income" ? "self" : current.splitPreset,
+                            customShareAmounts:
+                              item.value === "income"
+                                ? buildPresetCustomShareDraft({
+                                    memberIds: data.members.map((member) => member.id),
+                                    amount: Number(current.amount),
+                                    payerMemberId: current.payerMemberId,
+                                    preset: "self",
+                                  })
+                                : current.customShareAmounts,
                           }
                         : current,
                     )
@@ -319,11 +511,11 @@ function TransactionComposerSheet({
               className="w-full rounded-[24px] border bg-[var(--surface)] px-4 py-4 text-3xl font-semibold outline-none"
               inputMode="decimal"
               onChange={(event) =>
-                setForm((current) =>
-                  current
-                    ? {
-                        ...current,
-                        amount: clampCurrencyInput(event.target.value),
+                    setForm((current) =>
+                      current
+                        ? {
+                            ...current,
+                            amount: clampCurrencyInput(event.target.value),
                       }
                     : current,
                 )
@@ -392,10 +584,11 @@ function TransactionComposerSheet({
           {form.type === "expense" ? (
             <section>
               <label className="mb-2 block text-sm font-medium">分摊方式</label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 {[
                   { value: "equal", label: "共同平分" },
                   { value: "self", label: "自己承担" },
+                  { value: "custom", label: "自定义" },
                 ].map((item) => (
                   <button
                     key={item.value}
@@ -411,6 +604,19 @@ function TransactionComposerSheet({
                           ? {
                               ...current,
                               splitPreset: item.value as TransactionFormState["splitPreset"],
+                              customShareAmounts:
+                                item.value === "custom" &&
+                                !hasMeaningfulCustomShares(current.customShareAmounts)
+                                  ? buildPresetCustomShareDraft({
+                                      memberIds: data.members.map((member) => member.id),
+                                      amount: Number(current.amount),
+                                      payerMemberId: current.payerMemberId,
+                                      preset:
+                                        current.splitPreset === "self"
+                                          ? "self"
+                                          : "equal",
+                                    })
+                                  : current.customShareAmounts,
                             }
                           : current,
                       )
@@ -420,6 +626,117 @@ function TransactionComposerSheet({
                     {item.label}
                   </button>
                 ))}
+              </div>
+            </section>
+          ) : null}
+
+          {form.type === "expense" && form.splitPreset === "custom" ? (
+            <section>
+              <div className="flex items-center justify-between gap-3">
+                <label className="block text-sm font-medium">自定义分摊金额</label>
+                <span
+                  className={cn(
+                    "text-xs font-medium",
+                    Math.abs(remainingCustomAmount) <= 0.01
+                      ? "text-[var(--accent-strong)]"
+                      : "text-[var(--danger)]",
+                  )}
+                >
+                  {Math.abs(remainingCustomAmount) <= 0.01
+                    ? "已分配完成"
+                    : `还差 ${remainingCustomAmount.toFixed(2)} 元`}
+                </span>
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button
+                  onClick={() =>
+                    setForm((current) =>
+                      current
+                        ? {
+                            ...current,
+                            customShareAmounts: buildPresetCustomShareDraft({
+                              memberIds: data.members.map((member) => member.id),
+                              amount: Number(current.amount),
+                              payerMemberId: current.payerMemberId,
+                              preset: "equal",
+                            }),
+                          }
+                        : current,
+                    )
+                  }
+                  size="sm"
+                  variant="ghost"
+                >
+                  按当前金额平分
+                </Button>
+                <Button
+                  onClick={() =>
+                    setForm((current) =>
+                      current
+                        ? {
+                            ...current,
+                            customShareAmounts: buildPresetCustomShareDraft({
+                              memberIds: data.members.map((member) => member.id),
+                              amount: Number(current.amount),
+                              payerMemberId: current.payerMemberId,
+                              preset: "self",
+                            }),
+                          }
+                        : current,
+                    )
+                  }
+                  size="sm"
+                  variant="ghost"
+                >
+                  付款人承担全部
+                </Button>
+              </div>
+
+              <div className="mt-4 space-y-3">
+                {data.members.map((member) => {
+                  const shareEntry =
+                    customShareDraft.find((entry) => entry.memberId === member.id) ?? null;
+
+                  return (
+                    <div
+                      key={member.id}
+                      className="theme-surface-card-strong flex items-center justify-between rounded-[20px] border px-4 py-3"
+                    >
+                      <div>
+                        <p className="font-medium">{member.displayName}</p>
+                        <p className="mt-1 text-sm text-[var(--muted)]">
+                          {member.id === form.payerMemberId ? "当前付款人" : "参与分摊成员"}
+                        </p>
+                      </div>
+                      <input
+                        className="w-28 rounded-[16px] border bg-[var(--surface)] px-3 py-2 text-right text-sm outline-none"
+                        inputMode="decimal"
+                        onChange={(event) =>
+                          setForm((current) =>
+                            current
+                              ? {
+                                  ...current,
+                                  customShareAmounts: current.customShareAmounts.map((entry) =>
+                                    entry.memberId === member.id
+                                      ? {
+                                          ...entry,
+                                          shareAmount: clampCurrencyInput(
+                                            event.target.value,
+                                          ),
+                                        }
+                                      : entry,
+                                  ),
+                                }
+                              : current,
+                          )
+                        }
+                        placeholder="0.00"
+                        value={shareEntry?.shareAmount ?? ""}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </section>
           ) : null}

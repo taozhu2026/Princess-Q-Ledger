@@ -6,6 +6,7 @@ import {
 import { readLedgerSnapshot, writeLedgerSnapshot } from "@/entities/ledger/storage";
 import type { LedgerRepository } from "@/entities/ledger/repository-types";
 import type {
+  BookUpdateInput,
   CategoryType,
   Invitation,
   LedgerSnapshot,
@@ -81,6 +82,19 @@ export const localLedgerRepository: LedgerRepository = {
   async setThemePreference(themePreference: ThemePreference) {
     return withSnapshot((snapshot) => {
       snapshot.preferences.themePreference = themePreference;
+      return cloneSnapshot(snapshot);
+    });
+  },
+
+  async updateBook(input: BookUpdateInput) {
+    return withSnapshot((snapshot) => {
+      const name = input.name.trim();
+
+      if (!snapshot.book || !name) {
+        return cloneSnapshot(snapshot);
+      }
+
+      snapshot.book.name = name;
       return cloneSnapshot(snapshot);
     });
   },
@@ -231,6 +245,16 @@ export const localLedgerRepository: LedgerRepository = {
         ok: true,
         message: invitation.token,
       };
+    });
+  },
+
+  async revokeInvitation(invitationId: string) {
+    return withSnapshot((snapshot) => {
+      snapshot.invitations = snapshot.invitations.filter(
+        (invitation) => invitation.id !== invitationId,
+      );
+
+      return cloneSnapshot(snapshot);
     });
   },
 

@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import {
   Copy,
   DatabaseBackup,
+  Edit3,
   Link2,
   LogOut,
   MoonStar,
@@ -33,9 +34,11 @@ import {
   useCreateInvitationMutation,
   useDeleteCategoryMutation,
   useLedgerSnapshot,
+  useRevokeInvitationMutation,
   useResetLedgerMutation,
   useSetThemePreferenceMutation,
   useSignOutMutation,
+  useUpdateBookMutation,
   useUpdateProfileMutation,
 } from "@/features/transactions/api/use-ledger-data";
 import { useTransactionComposerStore } from "@/features/transactions/store/transaction-composer-store";
@@ -191,14 +194,87 @@ function ProfileEditor({
   );
 }
 
+function BookNameEditor({
+  initialBookName,
+  isOwner,
+  isSaving,
+  message,
+  onSave,
+}: {
+  initialBookName: string;
+  isOwner: boolean;
+  isSaving: boolean;
+  message: string;
+  onSave: (name: string) => Promise<void>;
+}) {
+  const [bookName, setBookName] = useState(initialBookName);
+  const [localMessage, setLocalMessage] = useState("");
+
+  return (
+    <div className="theme-surface-card rounded-[24px] border px-4 py-4 shadow-[var(--shadow-soft)]">
+      <div className="flex items-start gap-3">
+        <div className="rounded-[18px] bg-[var(--highlight-soft)] p-3 text-[#ba835f]">
+          <Edit3 className="h-5 w-5" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold">账本名称</p>
+          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+            {isOwner
+              ? "创建者可以直接修改账本名称，首页和浏览器标题会随之更新。"
+              : "当前成员只能查看账本名称，修改权交给创建者。"}
+          </p>
+        </div>
+      </div>
+
+      {isOwner ? (
+        <>
+          <Input
+            className="mt-4 shadow-none"
+            onChange={(event) => setBookName(event.target.value)}
+            placeholder="输入账本名称"
+            value={bookName}
+          />
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Button
+              disabled={isSaving}
+              onClick={async () => {
+                if (!bookName.trim()) {
+                  setLocalMessage("账本名称不能为空。");
+                  return;
+                }
+
+                setLocalMessage("");
+                await onSave(bookName.trim());
+              }}
+              variant="secondary"
+            >
+              {isSaving ? "正在保存..." : "保存账本名称"}
+            </Button>
+          </div>
+        </>
+      ) : (
+        <div className="theme-elevated-surface mt-4 rounded-[18px] px-4 py-3 text-sm text-[var(--foreground)]">
+          {initialBookName}
+        </div>
+      )}
+
+      <p className="mt-4 text-sm leading-6 text-[var(--muted)]">
+        {localMessage || message || "改名后不会影响已有记录和成员权限。"}
+      </p>
+    </div>
+  );
+}
+
 export function SettingsScreen() {
   const { data } = useLedgerSnapshot();
   const { setTheme } = useTheme();
   const setThemePreference = useSetThemePreferenceMutation();
+  const updateBook = useUpdateBookMutation();
   const updateProfile = useUpdateProfileMutation();
   const createCategory = useCreateCategoryMutation();
   const deleteCategory = useDeleteCategoryMutation();
   const createInvitation = useCreateInvitationMutation();
+  const revokeInvitation = useRevokeInvitationMutation();
   const resetLedger = useResetLedgerMutation();
   const signOut = useSignOutMutation();
   const openDraft = useTransactionComposerStore((state) => state.openCreate);
@@ -208,6 +284,7 @@ export function SettingsScreen() {
   const [newCategoryType, setNewCategoryType] = useState<CategoryType>("expense");
   const [profileMessage, setProfileMessage] = useState("");
   const [themeMessage, setThemeMessage] = useState("");
+  const [bookMessage, setBookMessage] = useState("");
   const [sharingMessage, setSharingMessage] = useState("");
   const [categoryMessage, setCategoryMessage] = useState("");
   const [dataMessage, setDataMessage] = useState("");
@@ -448,6 +525,26 @@ export function SettingsScreen() {
           </div>
         </div>
 
+        {data.book ? (
+          <div className="mt-4">
+            <BookNameEditor
+              initialBookName={data.book.name}
+              isOwner={isOwner}
+              isSaving={updateBook.isPending}
+              key={`${data.book.id}:${data.book.name}`}
+              message={bookMessage}
+              onSave={async (name) => {
+                try {
+                  await updateBook.mutateAsync({ name });
+                  setBookMessage("账本名称已更新。");
+                } catch (error) {
+                  setBookMessage(getErrorMessage(error));
+                }
+              }}
+            />
+          </div>
+        ) : null}
+
         <div className="mt-5">
           <p className="text-sm font-semibold">成员列表</p>
           <div className="mt-3 space-y-3">
@@ -546,8 +643,12 @@ export function SettingsScreen() {
           ) : null}
 
           <div className="mt-4 space-y-3">
-            {data.invitations.slice(0, 3).map((invitation) => {
+            {data.invitations.slice(0, 5).map((invitation) => {
               const status = getInvitationStatus(invitation, mountedAt);
+              const canRevoke =
+                canInvite &&
+                !invitation.acceptedAt &&
+                !revokeInvitation.isPending;
 
               return (
                 <div
@@ -562,9 +663,32 @@ export function SettingsScreen() {
                         : `有效至 ${formatDateTimeLabel(invitation.expiresAt)}`}
                     </p>
                   </div>
-                  <span className={`rounded-full px-3 py-1 text-xs font-medium ${status.tone}`}>
-                    {status.label}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`rounded-full px-3 py-1 text-xs font-medium ${status.tone}`}>
+                      {status.label}
+                    </span>
+                    {canRevoke ? (
+                      <Button
+                        disabled={revokeInvitation.isPending}
+                        onClick={async () => {
+                          if (!window.confirm("确认撤销这条邀请吗？撤销后链接将立即失效。")) {
+                            return;
+                          }
+
+                          try {
+                            await revokeInvitation.mutateAsync(invitation.id);
+                            setSharingMessage("邀请已撤销。");
+                          } catch (error) {
+                            setSharingMessage(getErrorMessage(error));
+                          }
+                        }}
+                        size="sm"
+                        variant="ghost"
+                      >
+                        撤销
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
               );
             })}

@@ -145,6 +145,10 @@ export interface LedgerBootstrapInput {
   displayName: string;
 }
 
+export interface BookUpdateInput {
+  name: string;
+}
+
 export interface ProfileUpdateInput {
   displayName: string;
 }

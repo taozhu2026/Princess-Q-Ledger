@@ -2,6 +2,7 @@ import { createEmptyLedgerSnapshot } from "@/entities/ledger/empty-ledger";
 import type { LedgerRepository } from "@/entities/ledger/repository-types";
 import type {
   BookMember,
+  BookUpdateInput,
   Category,
   Invitation,
   LedgerBootstrapInput,
@@ -495,6 +496,27 @@ export const supabaseLedgerRepository: LedgerRepository = {
     return getAuthenticatedSnapshot();
   },
 
+  async updateBook(input: BookUpdateInput) {
+    const supabase = requireClient();
+    const { bookId } = await getCurrentBookContext();
+    const name = input.name.trim();
+
+    if (!name) {
+      return getAuthenticatedSnapshot();
+    }
+
+    const { error } = await supabase.rpc("rename_book", {
+      target_book_id: bookId,
+      new_book_name: name,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return getAuthenticatedSnapshot();
+  },
+
   async updateProfile(input: ProfileUpdateInput) {
     const supabase = requireClient();
     const displayName = input.displayName.trim();
@@ -640,6 +662,20 @@ export const supabaseLedgerRepository: LedgerRepository = {
       ok: true,
       message: token,
     };
+  },
+
+  async revokeInvitation(invitationId) {
+    const supabase = requireClient();
+    const { error } = await supabase
+      .from("invitations")
+      .delete()
+      .eq("id", invitationId);
+
+    if (error) {
+      throw error;
+    }
+
+    return getAuthenticatedSnapshot();
   },
 
   async acceptInvitation(token) {

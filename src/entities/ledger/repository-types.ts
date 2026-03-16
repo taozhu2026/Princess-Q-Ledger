@@ -3,6 +3,7 @@ import type {
   AuthActionResult,
   CategoryType,
   GetLedgerSnapshotOptions,
+  BookUpdateInput,
   LedgerBootstrapInput,
   LedgerSnapshot,
   PasswordResetRequestInput,
@@ -18,6 +19,7 @@ export interface LedgerRepository {
   getSnapshot(options?: GetLedgerSnapshotOptions): Promise<LedgerSnapshot>;
   reset(): Promise<LedgerSnapshot>;
   setThemePreference(themePreference: ThemePreference): Promise<LedgerSnapshot>;
+  updateBook(input: BookUpdateInput): Promise<LedgerSnapshot>;
   updateProfile(input: ProfileUpdateInput): Promise<LedgerSnapshot>;
   createCategory(input: { name: string; type: CategoryType }): Promise<LedgerSnapshot>;
   deleteCategory(categoryId: string): Promise<LedgerSnapshot>;
@@ -28,6 +30,7 @@ export interface LedgerRepository {
   ): Promise<LedgerSnapshot>;
   deleteTransaction(transactionId: string): Promise<LedgerSnapshot>;
   createInvitation(): Promise<ActionResult>;
+  revokeInvitation(invitationId: string): Promise<LedgerSnapshot>;
   acceptInvitation(token: string): Promise<ActionResult>;
   confirmSettlement(monthKey: string, amount: number): Promise<LedgerSnapshot>;
   signInWithPassword(input: PasswordSignInInput): Promise<AuthActionResult>;

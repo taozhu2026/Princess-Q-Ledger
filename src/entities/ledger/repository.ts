@@ -17,6 +17,9 @@ export const ledgerRepository: LedgerRepository = {
   setThemePreference(themePreference) {
     return resolveLedgerRepository().setThemePreference(themePreference);
   },
+  updateBook(input) {
+    return resolveLedgerRepository().updateBook(input);
+  },
   updateProfile(input) {
     return resolveLedgerRepository().updateProfile(input);
   },
@@ -37,6 +40,9 @@ export const ledgerRepository: LedgerRepository = {
   },
   createInvitation() {
     return resolveLedgerRepository().createInvitation();
+  },
+  revokeInvitation(invitationId) {
+    return resolveLedgerRepository().revokeInvitation(invitationId);
   },
   acceptInvitation(token) {
     return resolveLedgerRepository().acceptInvitation(token);

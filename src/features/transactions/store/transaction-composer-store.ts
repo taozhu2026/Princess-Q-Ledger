@@ -6,6 +6,11 @@ import { persist } from "zustand/middleware";
 import type { TransactionType } from "@/entities/ledger";
 import { OFFLINE_DRAFT_STORAGE_KEY } from "@/shared/config/app";
 
+export interface TransactionShareFormState {
+  memberId: string;
+  shareAmount: string;
+}
+
 export interface TransactionFormState {
   type: TransactionType;
   amount: string;
@@ -13,7 +18,8 @@ export interface TransactionFormState {
   payerMemberId: string;
   occurredAt: string;
   note: string;
-  splitPreset: "equal" | "self";
+  splitPreset: "equal" | "self" | "custom";
+  customShareAmounts: TransactionShareFormState[];
 }
 
 interface PendingDraft {

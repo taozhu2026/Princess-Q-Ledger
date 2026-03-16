@@ -33,7 +33,9 @@ function buildShareText(
   }
 
   if (transaction.isShared) {
-    return `共同分摊 · ${shares.length} 人参与`;
+    return `${
+      transaction.splitMethod === "equal" ? "共同平分" : "自定义分摊"
+    } · ${shares.length} 人参与`;
   }
 
   return `${payer?.displayName ?? "自己"} 自己承担`;

@@ -8,6 +8,7 @@ import {
 
 import { ledgerRepository } from "@/entities/ledger";
 import type {
+  BookUpdateInput,
   LedgerBootstrapInput,
   CategoryType,
   GetLedgerSnapshotOptions,
@@ -98,6 +99,15 @@ export function useUpdateProfileMutation() {
   });
 }
 
+export function useUpdateBookMutation() {
+  const invalidate = useInvalidateLedger();
+
+  return useMutation({
+    mutationFn: (input: BookUpdateInput) => ledgerRepository.updateBook(input),
+    onSuccess: invalidate,
+  });
+}
+
 export function useCreateCategoryMutation() {
   const invalidate = useInvalidateLedger();
 
@@ -122,6 +132,15 @@ export function useCreateInvitationMutation() {
 
   return useMutation({
     mutationFn: () => ledgerRepository.createInvitation(),
+    onSuccess: invalidate,
+  });
+}
+
+export function useRevokeInvitationMutation() {
+  const invalidate = useInvalidateLedger();
+
+  return useMutation({
+    mutationFn: (invitationId: string) => ledgerRepository.revokeInvitation(invitationId),
     onSuccess: invalidate,
   });
 }
