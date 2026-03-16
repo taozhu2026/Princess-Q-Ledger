@@ -4,6 +4,7 @@ import { Filter, PawPrint } from "lucide-react";
 import { useState } from "react";
 
 import {
+  canManageTransaction,
   getAvailableMonths,
   getMonthTransactions,
   getTransactionShares,
@@ -35,6 +36,7 @@ export function LedgerScreen() {
 
   const months = getAvailableMonths(data);
   const monthKey = selectedMonth ?? months[0];
+  const viewerUserId = data.auth.viewer?.userId ?? null;
   const transactions = getMonthTransactions(data, monthKey).filter((transaction) => {
     if (selectedCategory !== "all" && transaction.categoryId !== selectedCategory) {
       return false;
@@ -136,8 +138,24 @@ export function LedgerScreen() {
               category={data.categories.find(
                 (category) => category.id === transaction.categoryId,
               )}
-              onDelete={(transactionId) => deleteMutation.mutate(transactionId)}
-              onEdit={(transactionId) => openEdit(transactionId)}
+              onDelete={
+                canManageTransaction({
+                  transaction,
+                  viewerMembership: data.viewerMembership,
+                  viewerUserId,
+                })
+                  ? (transactionId) => deleteMutation.mutate(transactionId)
+                  : undefined
+              }
+              onEdit={
+                canManageTransaction({
+                  transaction,
+                  viewerMembership: data.viewerMembership,
+                  viewerUserId,
+                })
+                  ? (transactionId) => openEdit(transactionId)
+                  : undefined
+              }
               payer={data.members.find(
                 (member) => member.id === transaction.payerMemberId,
               )}

@@ -9,6 +9,8 @@ import {
 } from "@/features/transactions/api/use-ledger-data";
 import { Button } from "@/shared/ui/button";
 import { CardDescription } from "@/shared/ui/card";
+import { cn } from "@/shared/lib/utils";
+import { getErrorMessage } from "@/shared/lib/errors";
 
 import { PasswordField } from "@/features/auth/components/password-field";
 
@@ -17,9 +19,11 @@ const MIN_PASSWORD_LENGTH = 8;
 export function AccountSecurityCard({
   email,
   supabaseReady,
+  className,
 }: {
   email: string;
   supabaseReady: boolean;
+  className?: string;
 }) {
   const updatePassword = useUpdatePasswordMutation();
   const sendResetEmail = useSendPasswordResetEmailMutation();
@@ -29,7 +33,12 @@ export function AccountSecurityCard({
 
   if (!supabaseReady) {
     return (
-      <div className="theme-surface-card rounded-[24px] border px-4 py-4 shadow-[var(--shadow-soft)]">
+      <div
+        className={cn(
+          "theme-surface-card rounded-[24px] border px-4 py-4 shadow-[var(--shadow-soft)]",
+          className,
+        )}
+      >
         <p className="text-sm font-semibold">账号安全</p>
         <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
           当前是本地演示模式，没有真实账号，也不需要设置密码。
@@ -39,7 +48,12 @@ export function AccountSecurityCard({
   }
 
   return (
-    <div className="theme-surface-card rounded-[24px] border px-4 py-4 shadow-[var(--shadow-soft)]">
+    <div
+      className={cn(
+        "theme-surface-card rounded-[24px] border px-4 py-4 shadow-[var(--shadow-soft)]",
+        className,
+      )}
+    >
       <div className="mb-4 flex items-start gap-3">
         <div className="rounded-[18px] bg-[var(--accent-soft)] p-3 text-[var(--accent-strong)]">
           <KeyRound className="h-5 w-5" />
@@ -83,13 +97,17 @@ export function AccountSecurityCard({
             }
 
             setLocalMessage("");
-            const result = await updatePassword.mutateAsync({
-              password,
-            });
+            try {
+              const result = await updatePassword.mutateAsync({
+                password,
+              });
 
-            if (result.ok) {
-              setPassword("");
-              setConfirmPassword("");
+              if (result.ok) {
+                setPassword("");
+                setConfirmPassword("");
+              }
+            } catch (error) {
+              setLocalMessage(getErrorMessage(error));
             }
           }}
           variant="secondary"
@@ -101,9 +119,13 @@ export function AccountSecurityCard({
           disabled={sendResetEmail.isPending}
           onClick={async () => {
             setLocalMessage("");
-            await sendResetEmail.mutateAsync({
-              email,
-            });
+            try {
+              await sendResetEmail.mutateAsync({
+                email,
+              });
+            } catch (error) {
+              setLocalMessage(getErrorMessage(error));
+            }
           }}
           variant="ghost"
         >
@@ -115,7 +137,13 @@ export function AccountSecurityCard({
       <p className="mt-4 text-sm leading-6 text-[var(--muted)]">
         {localMessage ||
           updatePassword.data?.message ||
+          (updatePassword.error
+            ? getErrorMessage(updatePassword.error)
+            : "") ||
           sendResetEmail.data?.message ||
+          (sendResetEmail.error
+            ? getErrorMessage(sendResetEmail.error)
+            : "") ||
           "如果你以前只用过 Magic Link，这里就可以直接补设一个密码。"}
       </p>
     </div>

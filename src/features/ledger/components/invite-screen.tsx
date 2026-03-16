@@ -11,7 +11,7 @@ import { Card, CardDescription, CardTitle } from "@/shared/ui/card";
 
 export function InviteScreen({ token }: { token: string }) {
   const { data: snapshot } = useLedgerSnapshot({ autoInitialize: false });
-  const { mutate, data } = useAcceptInvitationMutation();
+  const { mutate, data, isPending } = useAcceptInvitationMutation();
   const attemptedRef = useRef(false);
 
   useEffect(() => {
@@ -44,15 +44,18 @@ export function InviteScreen({ token }: { token: string }) {
       <Card className="mx-auto w-full max-w-[420px]">
         <CardTitle>加入共享账本</CardTitle>
         <CardDescription className="mt-3">
-          {data?.message ?? "正在校验邀请链接，请稍等。"}
+          {data?.message ??
+            (isPending ? "正在校验邀请链接，请稍等。" : "正在确认登录状态和邀请信息。")}
         </CardDescription>
 
         <div className="mt-6 flex flex-wrap gap-3">
           <Link href="/">
-            <Button>回到账本</Button>
+            <Button>{data?.ok ? "回到账本" : "回首页看看"}</Button>
           </Link>
           <Link href="/settings">
-            <Button variant="secondary">去设置看看</Button>
+            <Button variant="secondary">
+              {data?.ok ? "去设置看看" : "去设置页看状态"}
+            </Button>
           </Link>
         </div>
       </Card>

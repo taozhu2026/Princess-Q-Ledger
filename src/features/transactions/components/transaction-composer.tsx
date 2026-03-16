@@ -16,6 +16,7 @@ import {
   type TransactionFormState,
   useTransactionComposerStore,
 } from "@/features/transactions/store/transaction-composer-store";
+import { getErrorMessage } from "@/shared/lib/errors";
 import { clampCurrencyInput, cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 
@@ -139,6 +140,7 @@ function TransactionComposerSheet({
     (state) => state.saveOfflineDraft,
   );
   const [form, setForm] = useState<TransactionFormState>(initialForm);
+  const [localMessage, setLocalMessage] = useState("");
   const [isOnline, setIsOnline] = useState(
     typeof navigator === "undefined" ? true : navigator.onLine,
   );
@@ -165,10 +167,16 @@ function TransactionComposerSheet({
   const submit = async () => {
     const amount = Number(form.amount);
     if (!amount || !form.categoryId) {
+      setLocalMessage("请先补全金额和分类。");
       return;
     }
 
     if (!isOnline) {
+      if (editingTransactionId) {
+        setLocalMessage("当前离线，已有记录暂不支持离线修改，请联网后再保存。");
+        return;
+      }
+
       saveOfflineDraft(form);
       close();
       return;
@@ -218,12 +226,22 @@ function TransactionComposerSheet({
     };
 
     if (editingTransactionId) {
-      await updateMutation.mutateAsync({
-        transactionId: editingTransactionId,
-        input,
-      });
+      try {
+        await updateMutation.mutateAsync({
+          transactionId: editingTransactionId,
+          input,
+        });
+      } catch (error) {
+        setLocalMessage(getErrorMessage(error));
+        return;
+      }
     } else {
-      await createMutation.mutateAsync(input);
+      try {
+        await createMutation.mutateAsync(input);
+      } catch (error) {
+        setLocalMessage(getErrorMessage(error));
+        return;
+      }
     }
 
     if (restoreDraftId) {
@@ -232,6 +250,9 @@ function TransactionComposerSheet({
 
     close();
   };
+
+  const submitPending = createMutation.isPending || updateMutation.isPending;
+  const submitDisabled = submitPending || !form.amount || !form.categoryId;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/28 p-0 sm:items-center sm:justify-center sm:p-4">
@@ -444,10 +465,25 @@ function TransactionComposerSheet({
 
         <div className="sticky bottom-0 mt-6 grid grid-cols-[1fr_auto] gap-3 rounded-t-[28px] bg-[var(--card)] pt-4">
           <div className="flex items-center text-sm text-[var(--muted)]">
-            {isOnline ? "当前在线，保存后会立即写入账本。" : "当前离线，保存后会进入离线草稿。"}
+            {localMessage ||
+              (isOnline
+                ? "当前在线，保存后会立即写入账本。"
+                : editingTransactionId
+                  ? "当前离线，已有记录需要联网后再修改。"
+                  : "当前离线，保存后会进入离线草稿。")}
           </div>
-          <Button className="min-w-[108px]" onClick={() => void submit()}>
-            {editingTransactionId ? "保存修改" : isOnline ? "保存" : "存为草稿"}
+          <Button
+            className="min-w-[108px]"
+            disabled={submitDisabled}
+            onClick={() => void submit()}
+          >
+            {submitPending
+              ? "正在保存..."
+              : editingTransactionId
+                ? "保存修改"
+                : isOnline
+                  ? "保存"
+                  : "存为草稿"}
           </Button>
         </div>
       </div>

@@ -12,9 +12,11 @@ export function QueryProvider({ children }: PropsWithChildren) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: Infinity,
-            gcTime: Infinity,
-            refetchOnWindowFocus: false,
+            staleTime: 30_000,
+            gcTime: 5 * 60_000,
+            refetchOnReconnect: true,
+            refetchOnWindowFocus: true,
+            retry: 1,
           },
         },
       }),

@@ -435,7 +435,7 @@ async function upsertThemePreference(themePreference: ThemePreference) {
 
 async function createTransactionInternal(input: TransactionInput) {
   const supabase = requireClient();
-  const { bookId } = await getCurrentBookContext();
+  const { bookId, viewer } = await getCurrentBookContext();
   const { data: transactionRow, error: transactionError } = await supabase
     .from("transactions")
     .insert({
@@ -448,7 +448,7 @@ async function createTransactionInternal(input: TransactionInput) {
       note: input.note.trim(),
       is_shared: input.isShared,
       split_method: input.splitMethod,
-      created_by: input.createdByUserId,
+      created_by: viewer.userId,
     })
     .select("id")
     .single();
@@ -517,9 +517,15 @@ export const supabaseLedgerRepository: LedgerRepository = {
   async createCategory(input) {
     const supabase = requireClient();
     const { bookId } = await getCurrentBookContext();
+    const name = input.name.trim();
+
+    if (!name) {
+      return getAuthenticatedSnapshot();
+    }
+
     const { error } = await supabase.from("categories").insert({
       book_id: bookId,
-      name: input.name.trim(),
+      name,
       type: input.type,
       icon: input.type === "income" ? "Wallet" : "NotebookTabs",
       color: input.type === "income" ? "#80a771" : "#b98c68",
