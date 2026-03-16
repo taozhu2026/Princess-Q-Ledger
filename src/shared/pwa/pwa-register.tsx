@@ -88,6 +88,30 @@ export function PwaRegister() {
     },
   );
 
+  const registerCurrentServiceWorker = useEffectEvent(async () => {
+    if (!("serviceWorker" in navigator)) {
+      return;
+    }
+
+    const registration = await navigator.serviceWorker.register(
+      getServiceWorkerUrl(APP_BUILD_ID),
+      {
+        updateViaCache: "none",
+      },
+    );
+
+    registrationRef.current = registration;
+
+    if (registration.waiting) {
+      registration.waiting.postMessage({
+        type: "SKIP_WAITING",
+      });
+      return;
+    }
+
+    await registration.update().catch(() => undefined);
+  });
+
   const ensureLatestServiceWorker = useEffectEvent(async (targetBuildId: string) => {
     if (!("serviceWorker" in navigator)) {
       scheduleReload(targetBuildId);
@@ -138,8 +162,12 @@ export function PwaRegister() {
       return;
     }
 
+    if (!pendingBuildIdRef.current) {
+      return;
+    }
+
     controllerChangeHandledRef.current = true;
-    reloadToLatest(pendingBuildIdRef.current ?? APP_BUILD_ID);
+    reloadToLatest(pendingBuildIdRef.current);
   });
 
   const handleVisibilityOrFocus = useEffectEvent(() => {
@@ -168,7 +196,7 @@ export function PwaRegister() {
         "controllerchange",
         handleControllerChange,
       );
-      void ensureLatestServiceWorker(APP_BUILD_ID);
+      void registerCurrentServiceWorker();
     }
 
     void checkForNewVersion();
