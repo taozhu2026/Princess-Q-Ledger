@@ -2,9 +2,10 @@
 
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
-import { PawPrint } from "lucide-react";
+import { DatabaseZap, PawPrint, ShieldCheck, UsersRound } from "lucide-react";
 import { useEffect, type PropsWithChildren } from "react";
 
+import { formatBookKind, formatLedgerMode, formatMembershipRole } from "@/entities/ledger";
 import { AccessGate } from "@/features/ledger/components/access-gate";
 import {
   LedgerErrorCard,
@@ -27,6 +28,11 @@ export function AppShell({ children }: PropsWithChildren) {
   const pendingDrafts = useTransactionComposerStore((state) => state.pendingDrafts);
   const viewerDisplayName =
     data?.viewerMembership?.displayName ?? data?.auth.viewer?.displayName ?? null;
+  const bookKindLabel = data?.book ? formatBookKind(data.book.kind) : null;
+  const roleLabel = data?.viewerMembership
+    ? formatMembershipRole(data.viewerMembership.role)
+    : null;
+  const dataModeLabel = data ? formatLedgerMode(data.auth.mode) : null;
 
   useEffect(() => {
     if (!data) {
@@ -59,45 +65,58 @@ export function AppShell({ children }: PropsWithChildren) {
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[var(--accent-strong)]">
                   <PawPrint className="h-3.5 w-3.5" />
-                  CAT HEALING LEDGER
+                  ACTIVE LEDGER
                 </div>
                 <h1 className="mt-3 text-[26px] font-semibold tracking-[-0.02em]">
                   {data.book?.name}
                 </h1>
                 <p className="mt-2 max-w-[250px] text-sm leading-6 text-[var(--muted)]">
-                  把记账做成轻轻的一件小事，今天也慢慢记录就好。
+                  {bookKindLabel}
+                  {roleLabel ? ` · 你当前是${roleLabel}` : ""}
+                  {data?.members.length ? ` · 共 ${data.members.length} 位成员` : ""}
                 </p>
               </div>
               {viewerDisplayName ? (
                 <div className="rounded-[22px] bg-[var(--pink-soft)] px-4 py-3 text-right shadow-[0_10px_18px_rgba(244,214,214,0.22)]">
-                  <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
-                    当前账号
-                  </p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">当前账号</p>
                   <p className="mt-1 text-sm font-semibold text-[var(--foreground)]">
                     {viewerDisplayName}
                   </p>
+                  {data?.auth.viewer?.email ? (
+                    <p className="mt-1 text-xs text-[var(--muted)]">
+                      {data.auth.viewer.email}
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
             </div>
 
             <div className="mt-5 grid grid-cols-3 gap-3">
               <div className="rounded-[22px] bg-[var(--surface)] px-3 py-3">
-                <p className="text-xs text-[var(--muted)]">模式</p>
+                <p className="text-xs text-[var(--muted)]">账本类型</p>
                 <p className="mt-1 text-sm font-semibold text-[var(--accent-strong)]">
-                  App 风格
+                  {bookKindLabel}
                 </p>
               </div>
               <div className="rounded-[22px] bg-[var(--highlight-soft)] px-3 py-3">
-                <p className="text-xs text-[var(--muted)]">体验</p>
-                <p className="mt-1 text-sm font-semibold text-[var(--foreground)]">
-                  轻松记账
-                </p>
+                <p className="text-xs text-[var(--muted)]">成员与权限</p>
+                <div className="mt-1 flex items-center gap-1 text-sm font-semibold text-[var(--foreground)]">
+                  <UsersRound className="h-3.5 w-3.5" />
+                  <span>{data.members.length} 人</span>
+                  {roleLabel ? (
+                    <>
+                      <ShieldCheck className="ml-1 h-3.5 w-3.5" />
+                      <span>{roleLabel}</span>
+                    </>
+                  ) : null}
+                </div>
               </div>
               <div className="rounded-[22px] bg-[var(--pink-soft)] px-3 py-3">
-                <p className="text-xs text-[var(--muted)]">氛围</p>
-                <p className="mt-1 text-sm font-semibold text-[var(--foreground)]">
-                  猫咪治愈
-                </p>
+                <p className="text-xs text-[var(--muted)]">数据模式</p>
+                <div className="mt-1 flex items-center gap-1 text-sm font-semibold text-[var(--foreground)]">
+                  <DatabaseZap className="h-3.5 w-3.5" />
+                  <span>{dataModeLabel}</span>
+                </div>
               </div>
             </div>
           </header>
@@ -112,7 +131,7 @@ export function AppShell({ children }: PropsWithChildren) {
             <div>
               <p className="text-sm font-semibold">有 {pendingDrafts.length} 条草稿在等你</p>
               <p className="text-sm text-[var(--muted)]">
-                网络恢复后点这里继续提交，小猫会帮你把草稿守好。
+                当前只保存了新增记录草稿，恢复联网后从这里继续提交。
               </p>
             </div>
             <span className="theme-elevated-surface rounded-full px-3 py-2 text-sm font-medium text-[var(--accent-strong)]">

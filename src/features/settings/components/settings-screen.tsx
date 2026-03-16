@@ -20,6 +20,8 @@ import { useTheme } from "next-themes";
 import {
   canManageCategories,
   canManageInvitations,
+  formatBookKind,
+  formatMembershipRole,
   isOwnerMembership,
   type CategoryType,
   type Invitation,
@@ -77,14 +79,6 @@ function SummaryPill({
       {children}
     </span>
   );
-}
-
-function formatRole(role: "owner" | "member") {
-  return role === "owner" ? "创建者" : "成员";
-}
-
-function formatBookKind(kind: "personal" | "shared") {
-  return kind === "shared" ? "共享账本" : "个人账本";
 }
 
 function formatDateTimeLabel(value: string) {
@@ -247,7 +241,7 @@ export function SettingsScreen() {
   const currentThemeLabel = themeLabelMap[data.preferences.themePreference];
   const themeSummary = supabaseReady ? "邮箱账号" : "本地演示";
   const currentRoleLabel = data.viewerMembership
-    ? formatRole(data.viewerMembership.role)
+    ? formatMembershipRole(data.viewerMembership.role)
     : "未加入账本";
 
   return (
@@ -479,7 +473,7 @@ export function SettingsScreen() {
                       : "bg-[var(--surface)] text-[var(--muted)]"
                   }`}
                 >
-                  {formatRole(member.role)}
+                  {formatMembershipRole(member.role)}
                 </span>
               </div>
             ))}

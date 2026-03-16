@@ -15,6 +15,7 @@ import {
 } from "@/features/transactions/api/use-ledger-data";
 import { useTransactionComposerStore } from "@/features/transactions/store/transaction-composer-store";
 import { TransactionItem } from "@/features/transactions/components/transaction-item";
+import { getErrorMessage } from "@/shared/lib/errors";
 import { formatMonthLabel } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { Card, CardDescription, CardTitle } from "@/shared/ui/card";
@@ -29,6 +30,7 @@ export function LedgerScreen() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedPayer, setSelectedPayer] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
+  const [actionMessage, setActionMessage] = useState("");
 
   if (!data) {
     return null;
@@ -58,11 +60,11 @@ export function LedgerScreen() {
       <Card className="theme-card-hero overflow-hidden">
         <div className="inline-flex items-center gap-2 rounded-full bg-[var(--highlight-soft)] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[#ba835f]">
           <PawPrint className="h-3.5 w-3.5" />
-          LEDGER VIEW
+          RECORDS
         </div>
         <CardTitle className="mt-3 text-[24px] tracking-[-0.02em]">账单</CardTitle>
         <CardDescription className="mt-2">
-          像翻猫咪日记一样看每一笔记录。筛选条件都收在一块，查起来更轻。
+          所有记录都集中在这里查看、筛选和处理，默认按时间倒序展示。
         </CardDescription>
 
         <div className="mt-5 flex items-center gap-2 text-sm text-[var(--muted)]">
@@ -122,13 +124,18 @@ export function LedgerScreen() {
             <option value="settlement">结算</option>
           </select>
         </div>
+
+        <p className="mt-4 text-sm leading-6 text-[var(--muted)]">
+          {actionMessage ||
+            "共享账本下，创建者可以管理全部记录；成员只能编辑或删除自己创建的记录。"}
+        </p>
       </Card>
 
       <div className="space-y-3">
         {transactions.length === 0 ? (
           <EmptyState
             action={<Button onClick={() => openCreate()}>去添加第一笔</Button>}
-            description="可以换个筛选，或者直接点右下角先补一笔。这里会像猫咪窝一样慢慢堆起你的记录。"
+            description="可以换个筛选条件，或者直接新增一笔记录。"
             title="这个筛选下还没有记录"
           />
         ) : (
@@ -144,7 +151,18 @@ export function LedgerScreen() {
                   viewerMembership: data.viewerMembership,
                   viewerUserId,
                 })
-                  ? (transactionId) => deleteMutation.mutate(transactionId)
+                  ? async (transactionId) => {
+                      if (!window.confirm("确认删除这条记录吗？删除后无法恢复。")) {
+                        return;
+                      }
+
+                      try {
+                        await deleteMutation.mutateAsync(transactionId);
+                        setActionMessage("记录已删除。");
+                      } catch (error) {
+                        setActionMessage(getErrorMessage(error));
+                      }
+                    }
                   : undefined
               }
               onEdit={

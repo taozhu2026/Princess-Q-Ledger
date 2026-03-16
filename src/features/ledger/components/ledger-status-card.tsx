@@ -11,9 +11,9 @@ export function LedgerLoadingCard() {
         <div className="flex flex-col items-center text-center">
           <CatIllustration className="h-28 w-28" mood="sleeping" />
           <div className="mt-4">
-            <CardTitle>正在把账本抱过来</CardTitle>
+            <CardTitle>正在加载账本数据</CardTitle>
             <CardDescription className="mt-2">
-              小猫正在读取你的成员、交易和最近状态，马上就好。
+              正在同步成员、分类、交易和统计状态，通常只需要几秒。
             </CardDescription>
           </div>
         </div>
@@ -34,9 +34,9 @@ export function LedgerErrorCard({ message }: { message: string }) {
         <div className="flex flex-col items-center text-center">
           <CatIllustration className="h-28 w-28" mood="confused" />
           <div className="mt-4">
-            <CardTitle>小猫暂时没把数据搬出来</CardTitle>
+            <CardTitle>账本数据暂时没有加载成功</CardTitle>
             <CardDescription className="mt-2">
-              页面不是没有界面，而是启动后的第一条账本查询报错了，所以内容没有继续展开。
+              首次账本查询报错了，所以页面停在了这里，没有继续渲染业务内容。
             </CardDescription>
           </div>
         </div>

@@ -1,5 +1,6 @@
 export * from "@/entities/ledger/default-ledger";
 export * from "@/entities/ledger/empty-ledger";
+export * from "@/entities/ledger/labels";
 export * from "@/entities/ledger/permissions";
 export * from "@/entities/ledger/repository";
 export * from "@/entities/ledger/repository-types";

@@ -41,11 +41,11 @@ export function StatisticsScreen() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-[var(--pink-soft)] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[#b98484]">
               <PawPrint className="h-3.5 w-3.5" />
-              ANALYTICS
+              MONTHLY DATA
             </div>
             <CardTitle className="mt-3 text-[24px] tracking-[-0.02em]">统计</CardTitle>
             <CardDescription className="mt-2">
-              保持轻图表，但把月度状态看清楚。像翻一张安静的消费小地图。
+              这里按月份汇总支出结构、成员承担和近 6 个月趋势。
             </CardDescription>
           </div>
           <select
@@ -64,8 +64,8 @@ export function StatisticsScreen() {
 
       {!hasAnyMonthlyData ? (
         <EmptyState
-          description="这个月份还没有收入或支出记录。先记下一笔，统计页就会慢慢长出走势和占比。"
-          title="这只小猫还没等到这个月的数据"
+          description="这个月份还没有收入或支出记录。先记下一笔，统计页才会生成结构和趋势。"
+          title="这个月还没有可统计的数据"
         />
       ) : null}
 

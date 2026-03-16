@@ -10,8 +10,10 @@ import {
 import { useState } from "react";
 
 import {
+  canManageTransaction,
   computeMonthlyStatistics,
   computeSettlementSummary,
+  getMonthTransactions,
   getAvailableMonths,
   getRecentTransactions,
   getTransactionShares,
@@ -19,9 +21,11 @@ import {
 import { TransactionItem } from "@/features/transactions/components/transaction-item";
 import {
   useConfirmSettlementMutation,
+  useDeleteTransactionMutation,
   useLedgerSnapshot,
 } from "@/features/transactions/api/use-ledger-data";
 import { useTransactionComposerStore } from "@/features/transactions/store/transaction-composer-store";
+import { getErrorMessage } from "@/shared/lib/errors";
 import { formatCurrency, formatMonthLabel } from "@/shared/lib/utils";
 import { CatIllustration } from "@/shared/ui/cat-illustration";
 import { Button } from "@/shared/ui/button";
@@ -52,8 +56,11 @@ const summaryCards = [
 export function DashboardScreen() {
   const { data } = useLedgerSnapshot();
   const confirmSettlementMutation = useConfirmSettlementMutation();
+  const deleteTransactionMutation = useDeleteTransactionMutation();
   const openCreate = useTransactionComposerStore((state) => state.openCreate);
+  const openEdit = useTransactionComposerStore((state) => state.openEdit);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState("");
 
   if (!data) {
     return null;
@@ -61,10 +68,12 @@ export function DashboardScreen() {
 
   const months = getAvailableMonths(data);
   const monthKey = selectedMonth ?? months[0];
+  const monthTransactions = getMonthTransactions(data, monthKey);
   const statistics = computeMonthlyStatistics(data, monthKey);
   const settlement = computeSettlementSummary(data, monthKey);
   const recentTransactions = getRecentTransactions(data, 4);
   const isSharedLedger = data.members.length > 1;
+  const viewerUserId = data.auth.viewer?.userId ?? null;
 
   const maxPaidExpense = Math.max(
     ...statistics.memberComparison.map((member) => member.paidExpenseTotal),
@@ -81,13 +90,14 @@ export function DashboardScreen() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[11px] font-semibold tracking-[0.18em] text-[var(--accent-strong)]">
               <PawPrint className="h-3.5 w-3.5" />
-              MONTHLY MOOD
+              MONTHLY OVERVIEW
             </div>
             <h2 className="mt-3 text-[30px] font-semibold tracking-[-0.03em]">
               {formatMonthLabel(monthKey)}
             </h2>
             <p className="mt-2 max-w-[240px] text-sm leading-6 text-[var(--muted)]">
-              像照顾一只慢慢打呼的小猫一样，把这个月的账也温柔地整理好。
+              本月已记录 {monthTransactions.length} 笔，支出 {formatCurrency(statistics.expenseTotal)}
+              ，收入 {formatCurrency(statistics.incomeTotal)}。
             </p>
           </div>
           <CatIllustration className="h-24 w-24 shrink-0" mood="happy" />
@@ -99,7 +109,9 @@ export function DashboardScreen() {
               这个月的状态
             </p>
             <p className="mt-2 text-base font-semibold text-[var(--foreground)]">
-              {isSharedLedger ? "记账、结算、统计都会自动同步" : "今天也可以轻轻松松记一笔"}
+              {isSharedLedger
+                ? "共享成员、结算建议和统计都会围绕当前账本同步"
+                : "当前是个人账本，所有记录都只作用于你自己的账本"}
             </p>
           </div>
           <select
@@ -148,7 +160,7 @@ export function DashboardScreen() {
           <div>
             <CardTitle>本月待结算</CardTitle>
             <CardDescription className="mt-2">
-              系统会把“谁付款”和“谁承担”自动算清，再温柔地给出结算建议。
+              系统按本月记录自动汇总“谁付款”和“谁承担”，并给出一条可直接确认的结算建议。
             </CardDescription>
           </div>
           <div className="rounded-[20px] bg-[var(--accent-soft)] p-3 text-[var(--accent-strong)]">
@@ -166,14 +178,20 @@ export function DashboardScreen() {
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
               <Button
-                onClick={() =>
-                  confirmSettlementMutation.mutate({
-                    monthKey,
-                    amount: settlement.suggestedTransfer?.amount ?? 0,
-                  })
-                }
+                disabled={confirmSettlementMutation.isPending}
+                onClick={async () => {
+                  try {
+                    await confirmSettlementMutation.mutateAsync({
+                      monthKey,
+                      amount: settlement.suggestedTransfer?.amount ?? 0,
+                    });
+                    setActionMessage("结算记录已生成，本月待结算金额已更新。");
+                  } catch (error) {
+                    setActionMessage(getErrorMessage(error));
+                  }
+                }}
               >
-                确认结算
+                {confirmSettlementMutation.isPending ? "正在生成..." : "确认结算"}
               </Button>
               <p className="self-center text-sm text-[var(--muted)]">
                 确认后会自动生成一条结算交易，抵消待结算金额。
@@ -210,6 +228,13 @@ export function DashboardScreen() {
             </div>
           ))}
         </div>
+
+        <p className="mt-4 text-sm leading-6 text-[var(--muted)]">
+          {actionMessage ||
+            (settlement.suggestedTransfer
+              ? "确认后会写入一条结算记录，账单页和统计页会同步更新。"
+              : "本月暂时没有需要额外确认的结算记录。")}
+        </p>
       </Card>
 
       <Card>
@@ -250,8 +275,8 @@ export function DashboardScreen() {
         {recentTransactions.length === 0 ? (
           <EmptyState
             action={<Button onClick={() => openCreate()}>去添加第一笔</Button>}
-            description="今天还没有新的记录。先记下一笔小开销，首页就会慢慢热闹起来。"
-            title="小猫还没等到今天的账"
+            description="当前还没有最近记录。先记下一笔，首页会同步显示最新流水。"
+            title="最近记录还是空的"
           />
         ) : (
           recentTransactions.map((transaction) => (
@@ -260,6 +285,35 @@ export function DashboardScreen() {
               category={data.categories.find(
                 (category) => category.id === transaction.categoryId,
               )}
+              onDelete={
+                canManageTransaction({
+                  transaction,
+                  viewerMembership: data.viewerMembership,
+                  viewerUserId,
+                })
+                  ? async (transactionId) => {
+                      if (!window.confirm("确认删除这条记录吗？删除后无法恢复。")) {
+                        return;
+                      }
+
+                      try {
+                        await deleteTransactionMutation.mutateAsync(transactionId);
+                        setActionMessage("记录已删除。");
+                      } catch (error) {
+                        setActionMessage(getErrorMessage(error));
+                      }
+                    }
+                  : undefined
+              }
+              onEdit={
+                canManageTransaction({
+                  transaction,
+                  viewerMembership: data.viewerMembership,
+                  viewerUserId,
+                })
+                  ? (transactionId) => openEdit(transactionId)
+                  : undefined
+              }
               payer={data.members.find(
                 (member) => member.id === transaction.payerMemberId,
               )}
